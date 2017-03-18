@@ -1,4 +1,4 @@
-package kingsheep.team.uzh_shortname;
+package kingsheep.team.rmatil;
 
 import kingsheep.Creature;
 import kingsheep.Simulator;
@@ -9,12 +9,20 @@ import kingsheep.Type;
  */
 public abstract class UzhShortNameCreature extends Creature {
 
+    public final static int MAX_NUMBER_OF_TURNS = 100;
+
+    protected int currentTurn;
+
     public UzhShortNameCreature(Type type, Simulator parent, int playerID, int x, int y) {
         super(type, parent, playerID, x, y);
+        this.currentTurn = 1;
     }
 
     public String getNickname(){
-        //TODO change this to any nickname you like. This should not be your uzh_shortname. That way you can stay anonymous on the ranking list.
-        return "my_nickname";
+        return "rmatil";
+    }
+
+    protected void think(Type[][] map) {
+        this.currentTurn++;
     }
 }
