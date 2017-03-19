@@ -9,6 +9,8 @@ import java.util.TreeMap;
 
 public abstract class MiniMax {
 
+    public static final int MAX_DEPTH = 2;
+
     protected Player player;
 
     /**
@@ -41,7 +43,8 @@ public abstract class MiniMax {
             }
         }
 
-        Action[] orderedActions = (Action[]) possibleActions.entrySet().toArray();
+        Action[] orderedActions = new Action[possibleActions.values().size()];
+        possibleActions.values().toArray(orderedActions);
 
         if (orderedActions.length > 0) {
             return orderedActions[0];
@@ -63,15 +66,28 @@ public abstract class MiniMax {
     /**
      * Returns an indicator (as int) how good the given state is for the configured player.
      *
-     * @param s
+     * @param currentState The state to evaluate
      *
-     * @return
+     * @return The value indicator expressing how good the given state is
      */
-    protected abstract int utility(State s);
+    protected abstract int utility(State currentState);
+
+    /**
+     * Returns a heuristic, i.e. estimated value on how good the given state is
+     *
+     * @param currentState The state to evaluate
+     *
+     * @return The value indicator expressing how good the given state is
+     */
+    protected abstract int heuristicEval(State currentState) ;
 
     private int minValue(State state) {
         if (terminalTest(state)) {
             return utility(state);
+        }
+
+        if (cutoffTest(state)) {
+            return heuristicEval(state);
         }
 
         int v = Integer.MAX_VALUE;
@@ -92,6 +108,10 @@ public abstract class MiniMax {
             return utility(state);
         }
 
+        if (cutoffTest(state)) {
+            return heuristicEval(state);
+        }
+
         int v = Integer.MIN_VALUE;
         for (Action action : actions(state)) {
             v = Math.max(v, minValue(result(state, action)));
@@ -103,6 +123,17 @@ public abstract class MiniMax {
         }
 
         return v;
+    }
+
+    /**
+     * Checks whether we reached the maximum depth allowed for searching
+     *
+     * @param currentState The current state to check on
+     *
+     * @return True, if we reached the maximum depth, false otherwise
+     */
+    private boolean cutoffTest(State currentState) {
+        return currentState.getCurrentDepth() >= MiniMax.MAX_DEPTH;
     }
 
     /**
@@ -164,16 +195,6 @@ public abstract class MiniMax {
     }
 
     /**
-     * Defines which player has the move in a state
-     *
-     * @param s
-     */
-    private Player player(State s) {
-
-        return null;
-    }
-
-    /**
      * The transition model, which defines the result of a move,
      * a.k.a. the applied action to the given state
      */
@@ -189,7 +210,7 @@ public abstract class MiniMax {
         // TODO: check whether map is actually updated
         switch (action.getMove()) {
             case UP:
-                newState = new State(newMap, currentState.getTurn(), currentX, currentY - 1);
+                newState = new State(newMap, currentState.getTurn(), currentX, currentY - 1, currentState.getCurrentDepth() + 1);
                 newState.getMap()[currentY - 1][currentX] = this.player.getType();
 
                 if (newState.getMap()[currentY - 1][currentX] == this.player.getOppositeOpponentType()) {
@@ -202,7 +223,7 @@ public abstract class MiniMax {
 
                 break;
             case RIGHT:
-                newState = new State(newMap, currentState.getTurn(), currentX + 1, currentY);
+                newState = new State(newMap, currentState.getTurn(), currentX + 1, currentY, currentState.getCurrentDepth() + 1);
                 newState.getMap()[currentY][currentX + 1] = this.player.getType();
 
                 if (newState.getMap()[currentY][currentX + 1] == this.player.getOppositeOpponentType()) {
@@ -215,7 +236,7 @@ public abstract class MiniMax {
 
                 break;
             case DOWN:
-                newState = new State(newMap, currentState.getTurn(), currentX, currentY + 1);
+                newState = new State(newMap, currentState.getTurn(), currentX, currentY + 1, currentState.getCurrentDepth() + 1);
                 newState.getMap()[currentY + 1][currentX] = this.player.getType();
 
                 if (newState.getMap()[currentY + 1][currentX] == this.player.getOppositeOpponentType()) {
@@ -228,7 +249,7 @@ public abstract class MiniMax {
 
                 break;
             case LEFT:
-                newState = new State(newMap, currentState.getTurn(), currentX - 1, currentY);
+                newState = new State(newMap, currentState.getTurn(), currentX - 1, currentY, currentState.getCurrentDepth() + 1);
                 newState.getMap()[currentY][currentX - 1] = this.player.getType();
 
                 if (newState.getMap()[currentY][currentX - 1] == this.player.getOppositeOpponentType()) {
@@ -242,7 +263,7 @@ public abstract class MiniMax {
                 break;
             case WAIT:
                 // no collision can happen if we stay
-                newState = new State(newMap, currentState.getTurn(), currentX, currentY);
+                newState = new State(newMap, currentState.getTurn(), currentX, currentY, currentState.getCurrentDepth() + 1);
                 newState.getMap()[currentY][currentX] = this.player.getType();
                 break;
         }

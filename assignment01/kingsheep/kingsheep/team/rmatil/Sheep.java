@@ -37,7 +37,7 @@ public class Sheep extends UzhShortNameCreature {
         move = Move.WAIT;
 		*/
 
-        State state = new State(map, this.currentTurn, this.x, this.y);
+        State state = new State(map, this.currentTurn, this.x, this.y, 0);
         Player player = new Player(this.type, playerID);
         logger.info("current x: " + this.x + ", current y: " + this.y);
 

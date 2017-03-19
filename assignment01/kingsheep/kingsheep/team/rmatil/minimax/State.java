@@ -12,13 +12,15 @@ public class State {
     private int             currentTurn;
     private int             currentX;
     private int             currentY;
+    private int             currentDepth;
 
-    public State(Type[][] map, int currentTurn, int currentX, int currentY) {
+    public State(Type[][] map, int currentTurn, int currentX, int currentY, int currentDepth) {
         this.map = map;
         this.collisions = new ArrayList<>();
         this.currentTurn = currentTurn;
         this.currentX = currentX;
         this.currentY = currentY;
+        this.currentDepth = currentDepth;
     }
 
     public Type[][] getMap() {
@@ -43,6 +45,10 @@ public class State {
 
     public int getCurrentY() {
         return currentY;
+    }
+
+    public int getCurrentDepth() {
+        return currentDepth;
     }
 
     public Type[][] cloneMap() {
