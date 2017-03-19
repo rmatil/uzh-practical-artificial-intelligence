@@ -11,8 +11,20 @@ public abstract class MiniMax {
 
     protected Player player;
 
+    /**
+     * Alpha for alpha-beta pruning
+     */
+    private int a;
+
+    /**
+     * Beta for alpha-beta pruning
+     */
+    private int b;
+
     public MiniMax(Player player) {
         this.player = player;
+        this.a = Integer.MIN_VALUE;
+        this.b = Integer.MAX_VALUE;
     }
 
     public Action minimaxDecision(State state) {
@@ -65,6 +77,11 @@ public abstract class MiniMax {
         int v = Integer.MAX_VALUE;
         for (Action action : actions(state)) {
             v = Math.min(v, maxValue(result(state, action)));
+
+            if (v <= this.a) {
+                return v;
+            }
+            this.b = Math.min(this.b, v);
         }
 
         return v;
@@ -78,6 +95,11 @@ public abstract class MiniMax {
         int v = Integer.MIN_VALUE;
         for (Action action : actions(state)) {
             v = Math.max(v, minValue(result(state, action)));
+
+            if (v >= this.b) {
+                return v;
+            }
+            this.a = Math.max(this.a, v);
         }
 
         return v;
@@ -91,8 +113,8 @@ public abstract class MiniMax {
     private Action[] actions(State currentState) {
         List<Action> possibleActions = new ArrayList<>();
 
-        int currentX = this.player.getCurrentX();
-        int currentY = this.player.getCurrentY();
+        int currentX = currentState.getCurrentX();
+        int currentY = currentState.getCurrentY();
 
         // check if we can go to the top
         if (currentY > 0
@@ -105,7 +127,7 @@ public abstract class MiniMax {
         }
 
         // check if we can go right
-        if (currentX < currentState.getMap()[0].length
+        if (currentX < currentState.getMap()[0].length - 1
                 && currentState.getMap()[currentY][currentX + 1] != this.player.getTeamMateType()
                 && currentState.getMap()[currentY][currentX + 1] != this.player.getEqualOpponentType()
                 && currentState.getMap()[currentY][currentX + 1] != Type.FENCE) {
@@ -115,7 +137,7 @@ public abstract class MiniMax {
         }
 
         // check if we can go down
-        if (currentY < currentState.getMap().length
+        if (currentY < currentState.getMap().length - 1
                 && currentState.getMap()[currentY + 1][currentX] != this.player.getTeamMateType()
                 && currentState.getMap()[currentY + 1][currentX] != this.player.getEqualOpponentType()
                 && currentState.getMap()[currentY + 1][currentX] != Type.FENCE) {
@@ -156,17 +178,20 @@ public abstract class MiniMax {
      * a.k.a. the applied action to the given state
      */
     private State result(State currentState, Action action) {
-        int currentX = this.player.getCurrentX();
-        int currentY = this.player.getCurrentY();
+        int currentX = currentState.getCurrentX();
+        int currentY = currentState.getCurrentY();
 
         Type[][] newMap = currentState.cloneMap();
         newMap[currentY][currentX] = Type.EMPTY;
 
-        State newState = new State(newMap, currentState.getTurn());
+        State newState = null;
 
         // TODO: check whether map is actually updated
         switch (action.getMove()) {
             case UP:
+                newState = new State(newMap, currentState.getTurn(), currentX, currentY - 1);
+                newState.getMap()[currentY - 1][currentX] = this.player.getType();
+
                 if (newState.getMap()[currentY - 1][currentX] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX, currentY - 1);
                     collision.addCollisionParticipant(this.player.getType());
@@ -175,9 +200,11 @@ public abstract class MiniMax {
                     newState.addCollision(collision);
                 }
 
-                newState.getMap()[currentY - 1][currentX] = this.player.getType();
                 break;
             case RIGHT:
+                newState = new State(newMap, currentState.getTurn(), currentX + 1, currentY);
+                newState.getMap()[currentY][currentX + 1] = this.player.getType();
+
                 if (newState.getMap()[currentY][currentX + 1] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX + 1, currentY);
                     collision.addCollisionParticipant(this.player.getType());
@@ -186,9 +213,11 @@ public abstract class MiniMax {
                     newState.addCollision(collision);
                 }
 
-                newState.getMap()[currentY][currentX + 1] = this.player.getType();
                 break;
             case DOWN:
+                newState = new State(newMap, currentState.getTurn(), currentX, currentY + 1);
+                newState.getMap()[currentY + 1][currentX] = this.player.getType();
+
                 if (newState.getMap()[currentY + 1][currentX] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX, currentY + 1);
                     collision.addCollisionParticipant(this.player.getType());
@@ -197,9 +226,11 @@ public abstract class MiniMax {
                     newState.addCollision(collision);
                 }
 
-                newState.getMap()[currentY + 1][currentX] = this.player.getType();
                 break;
             case LEFT:
+                newState = new State(newMap, currentState.getTurn(), currentX - 1, currentY);
+                newState.getMap()[currentY][currentX - 1] = this.player.getType();
+
                 if (newState.getMap()[currentY][currentX - 1] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX - 1, currentY);
                     collision.addCollisionParticipant(this.player.getType());
@@ -208,10 +239,10 @@ public abstract class MiniMax {
                     newState.addCollision(collision);
                 }
 
-                newState.getMap()[currentY][currentX - 1] = this.player.getType();
                 break;
             case WAIT:
                 // no collision can happen if we stay
+                newState = new State(newMap, currentState.getTurn(), currentX, currentY);
                 newState.getMap()[currentY][currentX] = this.player.getType();
                 break;
         }

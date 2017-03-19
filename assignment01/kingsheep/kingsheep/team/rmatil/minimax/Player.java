@@ -6,14 +6,10 @@ public class Player {
 
     private final Type type;
     private final int  playerId;
-    private final int  currentX;
-    private final int  currentY;
 
-    public Player(Type type, int playerId, int currentX, int currentY) {
+    public Player(Type type, int playerId) {
         this.type = type;
         this.playerId = playerId;
-        this.currentX = currentX;
-        this.currentY = currentY;
     }
 
     public int getPlayerId() {
@@ -22,14 +18,6 @@ public class Player {
 
     public Type getType() {
         return type;
-    }
-
-    public int getCurrentX() {
-        return currentX;
-    }
-
-    public int getCurrentY() {
-        return currentY;
     }
 
     public Type getTeamMateType() {

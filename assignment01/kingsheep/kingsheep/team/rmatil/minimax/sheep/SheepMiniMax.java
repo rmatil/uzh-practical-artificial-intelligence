@@ -44,8 +44,8 @@ public class SheepMiniMax extends MiniMax {
             return Integer.MIN_VALUE;
         }
 
-        int currentX = this.player.getCurrentX();
-        int currentY = this.player.getCurrentY();
+        int currentX = currentState.getCurrentX();
+        int currentY = currentState.getCurrentY();
 
         if (currentState.getMap()[currentY][currentX] == Type.RHUBARB) {
             // double the value, so that the incentive for the wolf is still reasonable

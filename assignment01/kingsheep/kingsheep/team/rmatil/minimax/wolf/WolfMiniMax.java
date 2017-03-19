@@ -20,7 +20,7 @@ public class WolfMiniMax extends MiniMax {
         }
 
         for (Collision collision : currentState.getCollisions()) {
-            for (Type collisionParticipant: collision.getCollisionParticipants()) {
+            for (Type collisionParticipant : collision.getCollisionParticipants()) {
 
                 // check if there is a sheep of the other player
                 if (collisionParticipant == this.player.getOppositeOpponentType()) {
@@ -39,8 +39,8 @@ public class WolfMiniMax extends MiniMax {
             return Integer.MAX_VALUE;
         }
 
-        int currentX = this.player.getCurrentX();
-        int currentY = this.player.getCurrentY();
+        int currentX = currentState.getCurrentX();
+        int currentY = currentState.getCurrentY();
 
         if (currentState.getMap()[currentY][currentX] == Type.RHUBARB) {
             return 1;
