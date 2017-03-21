@@ -7,19 +7,23 @@ import kingsheep.team.rmatil.minimax.MiniMax;
 import kingsheep.team.rmatil.minimax.Player;
 import kingsheep.team.rmatil.minimax.State;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SheepMiniMax extends MiniMax {
 
     public static final int MAX_POSITIVE_INCENTIVE = 5;
-    public static final int POSITIVE_INCENTIVE = 1;
-    public static final int INDIFFERENT_INCENTIVE = 0;
-    public static final int MAX_NEGATIVE_INCENTIVE = -2;
+    public static final int POSITIVE_INCENTIVE     = 1;
+    public static final int INDIFFERENT_INCENTIVE  = 0;
+    public static final int MAX_NEGATIVE_INCENTIVE = - 2;
+
+    private Map<Integer, Integer> inverseScale = new HashMap<>();
 
     public SheepMiniMax(Player player) {
         super(player);
+        inverseScale.put(- 2, 5);
+        inverseScale.put(0, 1);
+        inverseScale.put(1, 0);
+        inverseScale.put(5, - 2);
     }
 
     /**
@@ -75,6 +79,7 @@ public class SheepMiniMax extends MiniMax {
 
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
+        int manhattanWolfDistance;
 
         List<Integer> rhubarbDistances = new ArrayList<>();
         List<Integer> grassDistances = new ArrayList<>();
@@ -95,27 +100,17 @@ public class SheepMiniMax extends MiniMax {
             }
         }
 
+        manhattanWolfDistance = Math.abs(currentX - wolfX) + Math.abs(currentY - wolfY);
+
         for (int y = 0; y < currentState.getMap().length; y++) {
             for (int x = 0; x < currentState.getMap()[0].length; x++) {
                 // calculate manhattan distance to the next rhubarb item
                 if (currentState.getMap()[y][x] == Type.RHUBARB) {
                     int manhattanDistance = Math.abs(currentX - x) + Math.abs(currentY - y);
-                    int manhattanWolfDistance = Math.abs(wolfX - x) + Math.abs(wolfY - y);
-
-                    if (manhattanWolfDistance < 3) {
-                        manhattanDistance = manhattanDistance - manhattanWolfDistance;
-                    }
-
                     rhubarbDistances.add(manhattanDistance);
                 } else if (currentState.getMap()[y][x] == Type.GRASS) {
                     // calculate manhattan distance to the next grass item
                     int manhattanDistance = Math.abs(currentX - x) + Math.abs(currentY - y);
-                    int manhattanWolfDistance = Math.abs(wolfX - x) + Math.abs(wolfY - y);
-
-                    if (manhattanWolfDistance < 3) {
-                        manhattanDistance = manhattanDistance - manhattanWolfDistance;
-                    }
-
                     grassDistances.add(manhattanDistance);
                 }
             }
@@ -125,32 +120,62 @@ public class SheepMiniMax extends MiniMax {
         Collections.sort(rhubarbDistances);
         Collections.sort(grassDistances);
 
+        if (manhattanWolfDistance == 1) {
+            // flee...
+            return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
+        }
+
+        // TODO: this is wrong, so wrong...
         if (grassDistances.size() > 0
                 && rhubarbDistances.size() > 0
-                && SheepMiniMax.MAX_POSITIVE_INCENTIVE * grassDistances.get(0) > rhubarbDistances.get(0)) {
-            // use weighted distances with their expected values
-            return roundToNextHalfAndRoundToInt(scaleDistanceToFoodIncentive(grassDistances.get(grassDistances.size() - 1) - grassDistances.get(0)));
+                && (SheepMiniMax.MAX_POSITIVE_INCENTIVE / SheepMiniMax.POSITIVE_INCENTIVE) * grassDistances.get(0) > rhubarbDistances.get(0)) {
+
+            // we are nearer to a grass item than to a rhubarb item
+            return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(grassDistances.get(0), 0, currentState.getMap().length + currentState.getMap()[0].length - 1)));
         } else if (rhubarbDistances.size() > 0) {
             // no grass anymore or rhubarb distance is better
-            return roundToNextHalfAndRoundToInt(scaleDistanceToFoodIncentive(rhubarbDistances.get(rhubarbDistances.size() - 1) - rhubarbDistances.get(0)));
+            return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(grassDistances.get(0), 0, currentState.getMap().length + currentState.getMap()[0].length - 1)));
         } else if (grassDistances.size() > 0) {
             // only grass left...
-            return roundToNextHalfAndRoundToInt(scaleDistanceToFoodIncentive(grassDistances.get(grassDistances.size() - 1) - grassDistances.get(0)));
+            return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(grassDistances.get(0), 0, currentState.getMap().length + currentState.getMap()[0].length - 1)));
         }
 
         // we choose the distance to the wolf if neither grass nor rhubarb exists
-        return roundToNextHalfAndRoundToInt(scaleDistanceToWolfIncentive((currentX - wolfX) + (currentY - wolfY)));
+        return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(manhattanWolfDistance, 1, currentState.getMap().length + currentState.getMap()[0].length)));
     }
 
-    private float scaleDistanceToFoodIncentive(int value) {
-        return ((float) value - SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / (SheepMiniMax.MAX_POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE);
+    private float scaleDistanceToIncentiveScale(int value, int min, int max) {
+//        return (value - SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / (SheepMiniMax.MAX_POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE);
+        float nomin = (SheepMiniMax.MAX_NEGATIVE_INCENTIVE + (value - min) * (SheepMiniMax.MAX_POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE));
+        float denomin = (float)( max - min);
+        float fraction = nomin / denomin;
+
+        return  fraction;
     }
 
-    private float scaleDistanceToWolfIncentive(int value) {
-        return ((float) value - SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / (SheepMiniMax.POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE);
+    private int roundToNextIncentive(float value) {
+        if (value <= SheepMiniMax.MAX_POSITIVE_INCENTIVE && value > SheepMiniMax.POSITIVE_INCENTIVE) {
+            if (value <= (SheepMiniMax.MAX_POSITIVE_INCENTIVE + SheepMiniMax.POSITIVE_INCENTIVE) / 2) {
+                return SheepMiniMax.POSITIVE_INCENTIVE;
+            } else {
+                return SheepMiniMax.MAX_POSITIVE_INCENTIVE;
+            }
+        } else if (value <= SheepMiniMax.POSITIVE_INCENTIVE && value > SheepMiniMax.INDIFFERENT_INCENTIVE) {
+            if (value <= (SheepMiniMax.POSITIVE_INCENTIVE + SheepMiniMax.INDIFFERENT_INCENTIVE) / 2) {
+                return SheepMiniMax.INDIFFERENT_INCENTIVE;
+            } else {
+                return SheepMiniMax.POSITIVE_INCENTIVE;
+            }
+        } else {
+            if (value <= (SheepMiniMax.INDIFFERENT_INCENTIVE + SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / 2) {
+                return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
+            } else {
+                return SheepMiniMax.INDIFFERENT_INCENTIVE;
+            }
+        }
     }
 
-    private int roundToNextHalfAndRoundToInt(float value) {
-        return (int) Math.round(Math.round(value - 0.5) + 0.5);
+    private int invertIncentive(int incentive) {
+        return this.inverseScale.get(incentive);
     }
 }

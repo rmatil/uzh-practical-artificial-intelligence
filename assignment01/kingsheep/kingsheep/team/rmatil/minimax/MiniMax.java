@@ -37,9 +37,9 @@ public abstract class MiniMax {
 
             // check whether we are min or max player
             if (this.player.getPlayerId() == 1) {
-                possibleActions.put(minValue(tmp), action);
-            } else {
                 possibleActions.put(maxValue(tmp), action);
+            } else {
+                possibleActions.put(minValue(tmp), action);
             }
         }
 
@@ -81,7 +81,7 @@ public abstract class MiniMax {
      */
     protected abstract int heuristicEval(State currentState) ;
 
-    private int minValue(State state) {
+    private int minValue(final State state) {
         if (terminalTest(state)) {
             return utility(state);
         }
@@ -91,8 +91,10 @@ public abstract class MiniMax {
         }
 
         int v = Integer.MAX_VALUE;
-        for (Action action : actions(state)) {
-            v = Math.min(v, maxValue(result(state, action)));
+        Action[] actions = actions(state);
+        for (Action action : actions) {
+            State appliedState = result(state, action);
+            v = Math.min(v, maxValue(appliedState));
 
             if (v <= this.a) {
                 return v;
@@ -103,7 +105,7 @@ public abstract class MiniMax {
         return v;
     }
 
-    private int maxValue(State state) {
+    private int maxValue(final State state) {
         if (terminalTest(state)) {
             return utility(state);
         }
@@ -113,8 +115,10 @@ public abstract class MiniMax {
         }
 
         int v = Integer.MIN_VALUE;
-        for (Action action : actions(state)) {
-            v = Math.max(v, minValue(result(state, action)));
+        Action[] actions = actions(state);
+        for (Action action : actions) {
+            State appliedState = result(state, action);
+            v = Math.max(v, minValue(appliedState));
 
             if (v >= this.b) {
                 return v;
@@ -198,7 +202,7 @@ public abstract class MiniMax {
      * The transition model, which defines the result of a move,
      * a.k.a. the applied action to the given state
      */
-    private State result(State currentState, Action action) {
+    private State result(final State currentState, final Action action) {
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
 

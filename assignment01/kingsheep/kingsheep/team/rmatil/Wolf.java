@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 
 public class Wolf extends UzhShortNameCreature {
 
-    private static final Logger logger = Logger.getLogger(Sheep.class.getName());
+    private static final Logger logger = Logger.getLogger(Wolf.class.getName());
 
     public Wolf(Type type, Simulator parent, int playerID, int x, int y) {
         super(type, parent, playerID, x, y);
