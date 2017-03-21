@@ -16,12 +16,12 @@ public abstract class MiniMax {
     /**
      * Alpha for alpha-beta pruning
      */
-    private int a;
+    private float a;
 
     /**
      * Beta for alpha-beta pruning
      */
-    private int b;
+    private float b;
 
     public MiniMax(Player player) {
         this.player = player;
@@ -30,7 +30,7 @@ public abstract class MiniMax {
     }
 
     public Action minimaxDecision(State state) {
-        Map<Integer, Action> possibleActions = new TreeMap<>();
+        Map<Float, Action> possibleActions = new TreeMap<>();
 
         for (Action action : actions(state)) {
             State tmp = result(state, action);
@@ -47,6 +47,11 @@ public abstract class MiniMax {
         possibleActions.values().toArray(orderedActions);
 
         if (orderedActions.length > 0) {
+            // list is enumerated in ascending order
+            if (this.player.getPlayerId() == 1) {
+                return orderedActions[orderedActions.length - 1];
+            }
+
             return orderedActions[0];
         }
 
@@ -79,9 +84,9 @@ public abstract class MiniMax {
      *
      * @return The value indicator expressing how good the given state is
      */
-    protected abstract int heuristicEval(State currentState) ;
+    protected abstract float heuristicEval(State currentState) ;
 
-    private int minValue(final State state) {
+    private float minValue(final State state) {
         if (terminalTest(state)) {
             return utility(state);
         }
@@ -90,7 +95,7 @@ public abstract class MiniMax {
             return heuristicEval(state);
         }
 
-        int v = Integer.MAX_VALUE;
+        float v = Integer.MAX_VALUE;
         Action[] actions = actions(state);
         for (Action action : actions) {
             State appliedState = result(state, action);
@@ -105,7 +110,7 @@ public abstract class MiniMax {
         return v;
     }
 
-    private int maxValue(final State state) {
+    private float maxValue(final State state) {
         if (terminalTest(state)) {
             return utility(state);
         }
@@ -114,7 +119,7 @@ public abstract class MiniMax {
             return heuristicEval(state);
         }
 
-        int v = Integer.MIN_VALUE;
+        float v = Integer.MIN_VALUE;
         Action[] actions = actions(state);
         for (Action action : actions) {
             State appliedState = result(state, action);
@@ -211,11 +216,9 @@ public abstract class MiniMax {
 
         State newState = null;
 
-        // TODO: check whether map is actually updated
         switch (action.getMove()) {
             case UP:
                 newState = new State(newMap, currentState.getTurn(), currentX, currentY - 1, currentState.getCurrentDepth() + 1);
-                newState.getMap()[currentY - 1][currentX] = this.player.getType();
 
                 if (newState.getMap()[currentY - 1][currentX] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX, currentY - 1);
@@ -223,12 +226,25 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
+                } else if (newState.getMap()[currentY - 1][currentX] == Type.GRASS ) {
+                    Collision collision = new Collision(currentX, currentY - 1);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.GRASS);
+
+                    newState.addCollision(collision);
+                } else if (newState.getMap()[currentY - 1][currentX] == Type.RHUBARB) {
+                    Collision collision = new Collision(currentX, currentY - 1);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.RHUBARB);
+
+                    newState.addCollision(collision);
                 }
+
+                newState.getMap()[currentY - 1][currentX] = this.player.getType();
 
                 break;
             case RIGHT:
                 newState = new State(newMap, currentState.getTurn(), currentX + 1, currentY, currentState.getCurrentDepth() + 1);
-                newState.getMap()[currentY][currentX + 1] = this.player.getType();
 
                 if (newState.getMap()[currentY][currentX + 1] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX + 1, currentY);
@@ -236,12 +252,24 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
+                } else if (newState.getMap()[currentY][currentX + 1] == Type.GRASS ) {
+                    Collision collision = new Collision(currentX + 1, currentY);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.GRASS);
+
+                    newState.addCollision(collision);
+                } else if (newState.getMap()[currentY][currentX + 1] == Type.RHUBARB) {
+                    Collision collision = new Collision(currentX + 1, currentY);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.RHUBARB);
+
+                    newState.addCollision(collision);
                 }
 
+                newState.getMap()[currentY][currentX + 1] = this.player.getType();
                 break;
             case DOWN:
                 newState = new State(newMap, currentState.getTurn(), currentX, currentY + 1, currentState.getCurrentDepth() + 1);
-                newState.getMap()[currentY + 1][currentX] = this.player.getType();
 
                 if (newState.getMap()[currentY + 1][currentX] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX, currentY + 1);
@@ -249,12 +277,24 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
+                }  else if (newState.getMap()[currentY + 1][currentX] == Type.GRASS ) {
+                    Collision collision = new Collision(currentX, currentY + 1);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.GRASS);
+
+                    newState.addCollision(collision);
+                } else if (newState.getMap()[currentY + 1][currentX] == Type.RHUBARB) {
+                    Collision collision = new Collision(currentX, currentY + 1);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.RHUBARB);
+
+                    newState.addCollision(collision);
                 }
 
+                newState.getMap()[currentY + 1][currentX] = this.player.getType();
                 break;
             case LEFT:
                 newState = new State(newMap, currentState.getTurn(), currentX - 1, currentY, currentState.getCurrentDepth() + 1);
-                newState.getMap()[currentY][currentX - 1] = this.player.getType();
 
                 if (newState.getMap()[currentY][currentX - 1] == this.player.getOppositeOpponentType()) {
                     Collision collision = new Collision(currentX - 1, currentY);
@@ -262,8 +302,21 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
+                }  else if (newState.getMap()[currentY][currentX - 1] == Type.GRASS ) {
+                    Collision collision = new Collision(currentX - 1, currentY);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.GRASS);
+
+                    newState.addCollision(collision);
+                } else if (newState.getMap()[currentY][currentX - 1] == Type.RHUBARB) {
+                    Collision collision = new Collision(currentX - 1, currentY);
+                    collision.addCollisionParticipant(this.player.getType());
+                    collision.addCollisionParticipant(Type.RHUBARB);
+
+                    newState.addCollision(collision);
                 }
 
+                newState.getMap()[currentY][currentX - 1] = this.player.getType();
                 break;
             case WAIT:
                 // no collision can happen if we stay

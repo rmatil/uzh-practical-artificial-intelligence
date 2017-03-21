@@ -7,7 +7,9 @@ import kingsheep.team.rmatil.minimax.MiniMax;
 import kingsheep.team.rmatil.minimax.Player;
 import kingsheep.team.rmatil.minimax.State;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class SheepMiniMax extends MiniMax {
 
@@ -16,20 +18,18 @@ public class SheepMiniMax extends MiniMax {
     public static final int INDIFFERENT_INCENTIVE  = 0;
     public static final int MAX_NEGATIVE_INCENTIVE = - 2;
 
-    private Map<Integer, Integer> inverseScale = new HashMap<>();
-
     public SheepMiniMax(Player player) {
         super(player);
-        inverseScale.put(- 2, 5);
-        inverseScale.put(0, 1);
-        inverseScale.put(1, 0);
-        inverseScale.put(5, - 2);
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * The only terminal state there is for a sheep, is being eaten by the opponents wolf
+     * The only terminal states there are for a sheep
+     * <ul>
+     * <li>is being eaten by the opponent's wolf</li>
+     * <li>being on a food item</li>
+     * </ul>
      */
     @Override
     protected boolean terminalTest(State currentState) {
@@ -41,7 +41,10 @@ public class SheepMiniMax extends MiniMax {
             for (Type collisionParticipant : collision.getCollisionParticipants()) {
 
                 // check if there is a wolf of the other player
-                if (collisionParticipant == this.player.getOppositeOpponentType()) {
+                // or any food item
+                if (collisionParticipant == this.player.getOppositeOpponentType() ||
+                        collisionParticipant == Type.GRASS ||
+                        collisionParticipant == Type.RHUBARB) {
                     return true;
                 }
             }
@@ -52,20 +55,22 @@ public class SheepMiniMax extends MiniMax {
 
     @Override
     protected int utility(State currentState) {
-        // only terminal for sheep is being eaten by the other wolf
         if (this.terminalTest(currentState)) {
-            return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
-        }
+            for (Collision collision : currentState.getCollisions()) {
+                // check whether a wolf has eaten us
+                if (collision.getCollisionParticipants().contains(this.player.getOppositeOpponentType())) {
+                    return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
+                }
 
-        int currentX = currentState.getCurrentX();
-        int currentY = currentState.getCurrentY();
+                if (collision.getCollisionParticipants().contains(Type.RHUBARB)) {
+                    return SheepMiniMax.MAX_POSITIVE_INCENTIVE;
+                }
 
-        if (currentState.getMap()[currentY][currentX] == Type.RHUBARB) {
-            return SheepMiniMax.MAX_POSITIVE_INCENTIVE;
-        }
+                if (collision.getCollisionParticipants().contains(Type.GRASS)) {
+                    return SheepMiniMax.POSITIVE_INCENTIVE;
+                }
 
-        if (currentState.getMap()[currentY][currentX] == Type.GRASS) {
-            return SheepMiniMax.POSITIVE_INCENTIVE;
+            }
         }
 
         // we are indifferent otherwise
@@ -73,9 +78,15 @@ public class SheepMiniMax extends MiniMax {
     }
 
     @Override
-    protected int heuristicEval(State currentState) {
-        // the best move we can do is not going closer to any wolf
-        // but at the same time go closer to a food item
+    protected float heuristicEval(State currentState) {
+        // Once we are in here, any collisions with food items
+        // or the wolf have been already resolved.
+        //
+        // -> What we have to do now, is to approximate how good
+        //    the current state is based on the position we are on
+        //
+        // -> the best move we can do is not going closer to any wolf
+        //    but at the same time go closer to a food item
 
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
@@ -126,56 +137,45 @@ public class SheepMiniMax extends MiniMax {
         }
 
         // TODO: this is wrong, so wrong...
-        if (grassDistances.size() > 0
-                && rhubarbDistances.size() > 0
-                && (SheepMiniMax.MAX_POSITIVE_INCENTIVE / SheepMiniMax.POSITIVE_INCENTIVE) * grassDistances.get(0) > rhubarbDistances.get(0)) {
 
-            // we are nearer to a grass item than to a rhubarb item
-            return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(grassDistances.get(0), 0, currentState.getMap().length + currentState.getMap()[0].length - 1)));
+        if (grassDistances.size() > 0 && rhubarbDistances.size() > 0) {
+            float rhubarbIncentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
+            float grassIncentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
+
+            if (grassIncentive > rhubarbIncentive) {
+                return grassIncentive;
+            }
+
         } else if (rhubarbDistances.size() > 0) {
             // no grass anymore or rhubarb distance is better
-            return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(grassDistances.get(0), 0, currentState.getMap().length + currentState.getMap()[0].length - 1)));
+            return calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
         } else if (grassDistances.size() > 0) {
             // only grass left...
-            return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(grassDistances.get(0), 0, currentState.getMap().length + currentState.getMap()[0].length - 1)));
+            return calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
         }
 
         // we choose the distance to the wolf if neither grass nor rhubarb exists
-        return invertIncentive(roundToNextIncentive(scaleDistanceToIncentiveScale(manhattanWolfDistance, 1, currentState.getMap().length + currentState.getMap()[0].length)));
+        return calculateWolfIncentive(manhattanWolfDistance);
     }
 
-    private float scaleDistanceToIncentiveScale(int value, int min, int max) {
-//        return (value - SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / (SheepMiniMax.MAX_POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE);
-        float nomin = (SheepMiniMax.MAX_NEGATIVE_INCENTIVE + (value - min) * (SheepMiniMax.MAX_POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE));
-        float denomin = (float)( max - min);
-        float fraction = nomin / denomin;
+    private float calculateIncentive(int distance, int wolfDistance, Type type) {
+        float itemIncentive;
 
-        return  fraction;
-    }
-
-    private int roundToNextIncentive(float value) {
-        if (value <= SheepMiniMax.MAX_POSITIVE_INCENTIVE && value > SheepMiniMax.POSITIVE_INCENTIVE) {
-            if (value <= (SheepMiniMax.MAX_POSITIVE_INCENTIVE + SheepMiniMax.POSITIVE_INCENTIVE) / 2) {
-                return SheepMiniMax.POSITIVE_INCENTIVE;
-            } else {
-                return SheepMiniMax.MAX_POSITIVE_INCENTIVE;
-            }
-        } else if (value <= SheepMiniMax.POSITIVE_INCENTIVE && value > SheepMiniMax.INDIFFERENT_INCENTIVE) {
-            if (value <= (SheepMiniMax.POSITIVE_INCENTIVE + SheepMiniMax.INDIFFERENT_INCENTIVE) / 2) {
-                return SheepMiniMax.INDIFFERENT_INCENTIVE;
-            } else {
-                return SheepMiniMax.POSITIVE_INCENTIVE;
-            }
-        } else {
-            if (value <= (SheepMiniMax.INDIFFERENT_INCENTIVE + SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / 2) {
-                return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
-            } else {
-                return SheepMiniMax.INDIFFERENT_INCENTIVE;
-            }
+        switch (type) {
+            case RHUBARB:
+                itemIncentive = SheepMiniMax.MAX_POSITIVE_INCENTIVE;
+                break;
+            case GRASS:
+                itemIncentive = SheepMiniMax.POSITIVE_INCENTIVE;
+                break;
+            default:
+                throw new RuntimeException("Type " + type + " not recognized");
         }
+
+        return (1f / distance) * (1f / itemIncentive) - Math.abs((1f / wolfDistance) * (SheepMiniMax.MAX_NEGATIVE_INCENTIVE / 1f));
     }
 
-    private int invertIncentive(int incentive) {
-        return this.inverseScale.get(incentive);
+    private float calculateWolfIncentive(int wolfDistance) {
+        return (- 1f) * (1f / wolfDistance) * (SheepMiniMax.MAX_NEGATIVE_INCENTIVE / 1f);
     }
 }

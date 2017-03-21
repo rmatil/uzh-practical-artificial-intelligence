@@ -67,7 +67,7 @@ public class WolfMiniMax extends MiniMax {
     }
 
     @Override
-    protected int heuristicEval(State currentState) {
+    protected float heuristicEval(State currentState) {
         // the best move we can do is going closer to the other sheep
         // or eat food items
 
