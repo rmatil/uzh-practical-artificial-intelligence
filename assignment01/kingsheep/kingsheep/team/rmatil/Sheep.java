@@ -14,6 +14,8 @@ public class Sheep extends UzhShortNameCreature {
 
     private static final Logger logger = Logger.getLogger(Sheep.class.getName());
 
+    private Action.Move lastMove;
+
     public Sheep(Type type, Simulator parent, int playerID, int x, int y) {
         super(type, parent, playerID, x, y);
     }
@@ -42,7 +44,8 @@ public class Sheep extends UzhShortNameCreature {
         logger.info("current x: " + this.x + ", current y: " + this.y);
 
         MiniMax miniMax = new SheepMiniMax(player);
-        Action actionToExecute = miniMax.minimaxDecision(state);
+        Action actionToExecute = miniMax.minimaxDecision(state, lastMove);
+        lastMove = actionToExecute.getMove();
 
         switch (actionToExecute.getMove()) {
             case UP:

@@ -2,14 +2,11 @@ package kingsheep.team.rmatil.minimax;
 
 import kingsheep.Type;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public abstract class MiniMax {
 
-    public static final int MAX_DEPTH = 2;
+    public static final int MAX_DEPTH = 10;
 
     protected Player player;
 
@@ -29,30 +26,66 @@ public abstract class MiniMax {
         this.b = Integer.MAX_VALUE;
     }
 
-    public Action minimaxDecision(State state) {
-        Map<Float, Action> possibleActions = new TreeMap<>();
+    public Action minimaxDecision(State state, Action.Move lastMove) {
+        Map<Float, Action[]> possibleActions = new TreeMap<>();
 
         for (Action action : actions(state)) {
             State tmp = result(state, action);
 
             // check whether we are min or max player
+            float incentive;
             if (this.player.getPlayerId() == 1) {
-                possibleActions.put(maxValue(tmp), action);
+                incentive = maxValue(tmp);
             } else {
-                possibleActions.put(minValue(tmp), action);
+                incentive = minValue(tmp);
+            }
+
+            // there might be moves with the same incentive
+            if (! possibleActions.containsKey(incentive)) {
+                possibleActions.put(incentive, new Action[1]);
+                possibleActions.get(incentive)[0] = action;
+            } else {
+                // we have to extend the array
+                Action[] oldValues = possibleActions.get(incentive);
+                possibleActions.put(incentive, Arrays.copyOf(oldValues, oldValues.length + 1));
+                possibleActions.get(incentive)[oldValues.length] = action;
             }
         }
 
-        Action[] orderedActions = new Action[possibleActions.values().size()];
+        Action[][] orderedActions = new Action[possibleActions.values().size()][];
         possibleActions.values().toArray(orderedActions);
 
         if (orderedActions.length > 0) {
             // list is enumerated in ascending order
             if (this.player.getPlayerId() == 1) {
-                return orderedActions[orderedActions.length - 1];
+                if (orderedActions[orderedActions.length - 1].length == 1) {
+                    return orderedActions[orderedActions.length - 1][0];
+                } else {
+                    // look whether there is a move in the same direction as before, avoiding oscillating
+                    for (int i = 0; i < orderedActions[orderedActions.length - 1].length; i++) {
+                        if (orderedActions[orderedActions.length - 1][i].getMove().equals(lastMove)) {
+                            return orderedActions[orderedActions.length - 1][i];
+                        }
+                    }
+
+                    // no move in the same direction found
+                    return orderedActions[orderedActions.length - 1][0];
+                }
             }
 
-            return orderedActions[0];
+            if (orderedActions[0].length == 1) {
+                return orderedActions[0][0];
+            } else {
+                // look whether there is a move in the same direction as before, avoiding oscillating
+                for (int i = 0; i < orderedActions[0].length; i++) {
+                    if (orderedActions[0][i].getMove().equals(lastMove)) {
+                        return orderedActions[0][i];
+                    }
+                }
+
+                // no move in the same direction found
+                return orderedActions[0][0];
+            }
         }
 
         return new Action(Action.Move.WAIT);
@@ -84,7 +117,7 @@ public abstract class MiniMax {
      *
      * @return The value indicator expressing how good the given state is
      */
-    protected abstract float heuristicEval(State currentState) ;
+    protected abstract float heuristicEval(State currentState);
 
     private float minValue(final State state) {
         if (terminalTest(state)) {
@@ -197,7 +230,7 @@ public abstract class MiniMax {
         }
 
         // we can also wait...
-        possibleActions.add(new Action(Action.Move.WAIT));
+//        possibleActions.add(new Action(Action.Move.WAIT));
 
         Action[] resultActions = new Action[possibleActions.size()];
         return possibleActions.toArray(resultActions);
@@ -226,7 +259,7 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
-                } else if (newState.getMap()[currentY - 1][currentX] == Type.GRASS ) {
+                } else if (newState.getMap()[currentY - 1][currentX] == Type.GRASS) {
                     Collision collision = new Collision(currentX, currentY - 1);
                     collision.addCollisionParticipant(this.player.getType());
                     collision.addCollisionParticipant(Type.GRASS);
@@ -252,7 +285,7 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
-                } else if (newState.getMap()[currentY][currentX + 1] == Type.GRASS ) {
+                } else if (newState.getMap()[currentY][currentX + 1] == Type.GRASS) {
                     Collision collision = new Collision(currentX + 1, currentY);
                     collision.addCollisionParticipant(this.player.getType());
                     collision.addCollisionParticipant(Type.GRASS);
@@ -277,7 +310,7 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
-                }  else if (newState.getMap()[currentY + 1][currentX] == Type.GRASS ) {
+                } else if (newState.getMap()[currentY + 1][currentX] == Type.GRASS) {
                     Collision collision = new Collision(currentX, currentY + 1);
                     collision.addCollisionParticipant(this.player.getType());
                     collision.addCollisionParticipant(Type.GRASS);
@@ -302,7 +335,7 @@ public abstract class MiniMax {
                     collision.addCollisionParticipant(this.player.getOppositeOpponentType());
 
                     newState.addCollision(collision);
-                }  else if (newState.getMap()[currentY][currentX - 1] == Type.GRASS ) {
+                } else if (newState.getMap()[currentY][currentX - 1] == Type.GRASS) {
                     Collision collision = new Collision(currentX - 1, currentY);
                     collision.addCollisionParticipant(this.player.getType());
                     collision.addCollisionParticipant(Type.GRASS);
