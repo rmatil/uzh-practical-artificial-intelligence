@@ -57,31 +57,30 @@ public class SheepMiniMax extends MiniMax {
     }
 
     @Override
-    protected int utility(State currentState) {
+    protected float utility(State currentState) {
         if (this.terminalTest(currentState)) {
             for (Collision collision : currentState.getCollisions()) {
                 // check whether a wolf has eaten us
                 if (collision.getCollisionParticipants().contains(this.player.getOppositeOpponentType())) {
                     logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.MAX_NEGATIVE_INCENTIVE));
-                    return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
+                    return (1f/currentState.getCurrentDepth()) * SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
                 }
 
                 if (collision.getCollisionParticipants().contains(Type.RHUBARB)) {
                     logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.MAX_POSITIVE_INCENTIVE));
-                    return SheepMiniMax.MAX_POSITIVE_INCENTIVE;
+                    return (1f/currentState.getCurrentDepth()) * SheepMiniMax.MAX_POSITIVE_INCENTIVE;
                 }
 
                 if (collision.getCollisionParticipants().contains(Type.GRASS)) {
                     logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.POSITIVE_INCENTIVE));
-                    return SheepMiniMax.POSITIVE_INCENTIVE;
+                    return (1f/currentState.getCurrentDepth()) * SheepMiniMax.POSITIVE_INCENTIVE;
                 }
-
             }
         }
 
         // we are indifferent otherwise
         logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.INDIFFERENT_INCENTIVE));
-        return SheepMiniMax.INDIFFERENT_INCENTIVE;
+        return (1/currentState.getCurrentDepth()) * SheepMiniMax.INDIFFERENT_INCENTIVE;
     }
 
     @Override

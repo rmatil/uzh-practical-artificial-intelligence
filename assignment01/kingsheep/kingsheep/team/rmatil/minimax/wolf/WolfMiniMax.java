@@ -43,27 +43,27 @@ public class WolfMiniMax extends MiniMax {
     }
 
     @Override
-    protected int utility(State currentState) {
+    protected float utility(State currentState) {
         // only terminal for wolf is by eating the other sheep
         if (this.terminalTest(currentState)) {
-            return WolfMiniMax.MAX_POSITIVE_INCENTIVE;
+            return (1/currentState.getCurrentDepth()) * WolfMiniMax.MAX_POSITIVE_INCENTIVE;
         }
 
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
 
         if (currentState.getMap()[currentY][currentX] == Type.RHUBARB) {
-            return WolfMiniMax.POSITIVE_INCENTIVE;
+            return (1/currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
         }
 
         if (currentState.getMap()[currentY][currentX] == Type.GRASS) {
-            return WolfMiniMax.POSITIVE_INCENTIVE;
+            return (1/currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
         }
 
         // TODO: block other wolf
 
         // we are indifferent otherwise
-        return WolfMiniMax.INDIFFERENT_INCENTIVE;
+        return (1/currentState.getCurrentDepth()) *  WolfMiniMax.INDIFFERENT_INCENTIVE;
     }
 
     @Override
