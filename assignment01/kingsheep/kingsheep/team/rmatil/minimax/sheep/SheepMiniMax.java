@@ -142,8 +142,6 @@ public class SheepMiniMax extends MiniMax {
             return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
         }
 
-        // TODO: this is wrong, so wrong...
-
         if (grassDistances.size() > 0 && rhubarbDistances.size() > 0) {
             float rhubarbIncentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
             float grassIncentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
