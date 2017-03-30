@@ -6,18 +6,20 @@ import kingsheep.team.rmatil.minimax.Collision;
 import kingsheep.team.rmatil.minimax.MiniMax;
 import kingsheep.team.rmatil.minimax.Player;
 import kingsheep.team.rmatil.minimax.State;
-import kingsheep.team.rmatil.minimax.sheep.SheepMiniMax;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class WolfMiniMax extends MiniMax {
 
-    public static final int MAX_POSITIVE_INCENTIVE = 100;
-    public static final int POSITIVE_INCENTIVE     = 1;
-    public static final int INDIFFERENT_INCENTIVE  = 0;
-    public static final int MAX_NEGATIVE_INCENTIVE = - 2;
+    private static final Logger logger = Logger.getLogger(WolfMiniMax.class.getName());
+
+    public static final int MAX_POSITIVE_INCENTIVE    = 5;
+    public static final int BETTER_POSITIVE_INCENTIVE = 2;
+    public static final int POSITIVE_INCENTIVE        = 1;
+    public static final int INDIFFERENT_INCENTIVE     = 0;
 
     public WolfMiniMax(Player player) {
         super(player);
@@ -63,77 +65,125 @@ public class WolfMiniMax extends MiniMax {
             return (1 / currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
         }
 
-        // TODO: block other wolf
-
         // we are indifferent otherwise
         return (1 / currentState.getCurrentDepth()) * WolfMiniMax.INDIFFERENT_INCENTIVE;
     }
 
     @Override
     protected float heuristicEval(State currentState) {
-        // the best move we can do is going closer to the other sheep
-        // or eat food items
+        // Once we are in here, any collisions with food items
+        // or the sheep have been already resolved.
+        //
+        // -> What we have to do now, is to approximate how good
+        //    the current state is based on the position we are on
+        //
+        // -> the best move we can do is going closer to the other sheep
+        //    while also going closer to any food item
 
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
+        int manhattanSheepDistance;
 
-        List<Integer> foodItemDistances = new ArrayList<>();
+        List<Integer> rhubarbDistances = new ArrayList<>();
+        List<Integer> grassDistances = new ArrayList<>();
 
-        // TODO: block other wolf
-        int opponentSheepX = - 1;
-        int opponentSheepY = - 1;
-        int opponentSheepDistance = - 1;
+        int sheepX = - 1;
+        int sheepY = - 1;
         for (int y = 0; y < currentState.getMap().length; y++) {
             for (int x = 0; x < currentState.getMap()[0].length; x++) {
                 if (currentState.getMap()[y][x] == this.player.getOppositeOpponentType()) {
-                    opponentSheepX = x;
-                    opponentSheepY = y;
+                    sheepX = x;
+                    sheepY = y;
                     break;
                 }
             }
 
-            if (opponentSheepX != - 1 && opponentSheepY != - 1) {
+            if (sheepX != - 1 && sheepY != - 1) {
                 break;
             }
         }
 
-        opponentSheepDistance = Math.abs((currentX - opponentSheepX) + (currentY - opponentSheepY));
+        manhattanSheepDistance = Math.abs(currentX - sheepX) + Math.abs(currentY - sheepY);
+        // we choose the distance to the wolf if neither grass nor rhubarb exists
+        float sheepIncentive = calculateSheepIncentive(manhattanSheepDistance);
+        logger.info(String.format("[depth: %d][x: %d, y: %d][sheep] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), sheepIncentive));
 
         for (int y = 0; y < currentState.getMap().length; y++) {
             for (int x = 0; x < currentState.getMap()[0].length; x++) {
                 // calculate manhattan distance to the next rhubarb item
-                if (currentState.getMap()[y][x] == Type.RHUBARB || currentState.getMap()[y][x] == Type.GRASS) {
+                if (currentState.getMap()[y][x] == Type.RHUBARB) {
                     int manhattanDistance = Math.abs(currentX - x) + Math.abs(currentY - y);
-                    int manhattanWolfDistance = Math.abs(opponentSheepX - x) + Math.abs(opponentSheepY - y);
-
-                    foodItemDistances.add(manhattanDistance - manhattanWolfDistance);
+                    rhubarbDistances.add(manhattanDistance);
+                } else if (currentState.getMap()[y][x] == Type.GRASS) {
+                    // calculate manhattan distance to the next grass item
+                    int manhattanDistance = Math.abs(currentX - x) + Math.abs(currentY - y);
+                    grassDistances.add(manhattanDistance);
                 }
             }
         }
 
         // sort ascending for getting min distance
-        Collections.sort(foodItemDistances);
+        Collections.sort(rhubarbDistances);
+        Collections.sort(grassDistances);
 
-        int proportionFactor = 20;
-        if (foodItemDistances.size() > 0
-                && Math.round(WolfMiniMax.MAX_POSITIVE_INCENTIVE / proportionFactor) * foodItemDistances.get(0) > opponentSheepDistance) {
-            // use weighted distances with their expected values
-            return roundToNextHalfAndRoundToInt(scaleDistanceToFoodIncentive(foodItemDistances.get(0)));
+        // check if there is a food item with bigger incentive than the sheep
+        if (rhubarbDistances.size() > 0 && grassDistances.size() > 0) {
+            float rhubarbIncentive = calculateFoodIncentive(rhubarbDistances.get(0), manhattanSheepDistance, Type.RHUBARB);
+            float grassIncentive = calculateFoodIncentive(grassDistances.get(0), manhattanSheepDistance, Type.GRASS);
+
+            if (rhubarbIncentive > sheepIncentive && grassIncentive > sheepIncentive) {
+                if (rhubarbIncentive > grassIncentive) {
+                    logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), rhubarbIncentive));
+                    return rhubarbIncentive;
+                }
+
+                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), grassIncentive));
+                return grassIncentive;
+            }
         }
 
-        // we choose the distance to the sheep if no food items exist or they are too far away
-        return roundToNextHalfAndRoundToInt(scaleDistanceToSheepIncentive((currentX - opponentSheepX) + (currentY - opponentSheepY)));
+        // check if there is a rhubarb item with bigger incentive than the sheep
+        if (rhubarbDistances.size() > 0) {
+            float rhubarbIncentive = calculateFoodIncentive(rhubarbDistances.get(0), manhattanSheepDistance, Type.RHUBARB);
+
+            if (rhubarbIncentive > sheepIncentive) {
+                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), rhubarbIncentive));
+                return rhubarbIncentive;
+            }
+        }
+
+        // check if there is a grass item with bigger incentive than the sheep
+        if (grassDistances.size() > 0) {
+            float grassIncentive = calculateFoodIncentive(grassDistances.get(0), manhattanSheepDistance, Type.GRASS);
+
+            if (grassIncentive > sheepIncentive) {
+                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), grassIncentive));
+                return grassIncentive;
+            }
+        }
+
+        return sheepIncentive;
     }
 
-    private float scaleDistanceToFoodIncentive(int value) {
-        return ((float) value - SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / (SheepMiniMax.POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE);
+    private float calculateFoodIncentive(int distance, int sheepDistance, Type type) {
+        float itemIncentive;
+
+        switch (type) {
+            case RHUBARB:
+                itemIncentive = WolfMiniMax.BETTER_POSITIVE_INCENTIVE;
+                break;
+            case GRASS:
+                itemIncentive = WolfMiniMax.POSITIVE_INCENTIVE;
+                break;
+            default:
+                throw new RuntimeException("Type " + type + " not recognized");
+        }
+
+        return (1f / distance) * (1f / itemIncentive);
     }
 
-    private float scaleDistanceToSheepIncentive(int value) {
-        return ((float) value - SheepMiniMax.MAX_NEGATIVE_INCENTIVE) / (SheepMiniMax.MAX_POSITIVE_INCENTIVE - SheepMiniMax.MAX_NEGATIVE_INCENTIVE);
+    private float calculateSheepIncentive(int sheepDistance) {
+        return (1f / sheepDistance) * (WolfMiniMax.MAX_POSITIVE_INCENTIVE / 1f);
     }
 
-    private int roundToNextHalfAndRoundToInt(float value) {
-        return (int) Math.round(Math.round(value - 0.5) + 0.5);
-    }
 }

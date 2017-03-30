@@ -7,6 +7,7 @@ import kingsheep.team.rmatil.minimax.MiniMax;
 import kingsheep.team.rmatil.minimax.Player;
 import kingsheep.team.rmatil.minimax.State;
 import kingsheep.team.rmatil.minimax.sheep.SheepMiniMax;
+import kingsheep.team.rmatil.minimax.wolf.WolfMiniMax;
 
 import java.util.logging.Logger;
 
@@ -39,10 +40,10 @@ public class Wolf extends UzhShortNameCreature {
 		*/
 
         State state = new State(map, this.currentTurn, this.x, this.y, 0);
-        Player player = new Player(this.type, playerID);
+        Player player = new Player(this.type, this.playerID);
         logger.info("current x: " + this.x + ", current y: " + this.y);
 
-        MiniMax miniMax = new SheepMiniMax(player);
+        MiniMax miniMax = new WolfMiniMax(player);
         Action actionToExecute = miniMax.minimaxDecision(state, lastMove);
         lastMove = actionToExecute.getMove();
 
@@ -63,6 +64,8 @@ public class Wolf extends UzhShortNameCreature {
                 move = Move.WAIT;
                 break;
         }
+
+        move = Move.WAIT;
 
         logger.info("Wolf made move " + move.name());
         super.think(map);
