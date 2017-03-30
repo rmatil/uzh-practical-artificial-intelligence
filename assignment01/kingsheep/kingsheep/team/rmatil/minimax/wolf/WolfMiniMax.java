@@ -33,7 +33,10 @@ public class WolfMiniMax extends MiniMax {
             for (Type collisionParticipant : collision.getCollisionParticipants()) {
 
                 // check if there is a sheep of the other player
-                if (collisionParticipant == this.player.getOppositeOpponentType()) {
+                // or any type of food
+                if (collisionParticipant == this.player.getOppositeOpponentType() ||
+                        collisionParticipant == Type.GRASS ||
+                        collisionParticipant == Type.RHUBARB) {
                     return true;
                 }
             }
@@ -46,24 +49,24 @@ public class WolfMiniMax extends MiniMax {
     protected float utility(State currentState) {
         // only terminal for wolf is by eating the other sheep
         if (this.terminalTest(currentState)) {
-            return (1/currentState.getCurrentDepth()) * WolfMiniMax.MAX_POSITIVE_INCENTIVE;
+            return (1 / currentState.getCurrentDepth()) * WolfMiniMax.MAX_POSITIVE_INCENTIVE;
         }
 
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
 
         if (currentState.getMap()[currentY][currentX] == Type.RHUBARB) {
-            return (1/currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
+            return (1 / currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
         }
 
         if (currentState.getMap()[currentY][currentX] == Type.GRASS) {
-            return (1/currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
+            return (1 / currentState.getCurrentDepth()) * WolfMiniMax.POSITIVE_INCENTIVE;
         }
 
         // TODO: block other wolf
 
         // we are indifferent otherwise
-        return (1/currentState.getCurrentDepth()) *  WolfMiniMax.INDIFFERENT_INCENTIVE;
+        return (1 / currentState.getCurrentDepth()) * WolfMiniMax.INDIFFERENT_INCENTIVE;
     }
 
     @Override
