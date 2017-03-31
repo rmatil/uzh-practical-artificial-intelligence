@@ -40,7 +40,7 @@ public class Wolf extends UzhShortNameCreature {
 		*/
 
         State state = new State(map, this.currentTurn, this.x, this.y, 0);
-        Player player = new Player(this.type, this.playerID);
+        Player player = new Player(Type.WOLF1, 1);
         logger.info("current x: " + this.x + ", current y: " + this.y);
 
         MiniMax miniMax = new WolfMiniMax(player);
@@ -64,8 +64,6 @@ public class Wolf extends UzhShortNameCreature {
                 move = Move.WAIT;
                 break;
         }
-
-        move = Move.WAIT;
 
         logger.info("Wolf made move " + move.name());
         super.think(map);

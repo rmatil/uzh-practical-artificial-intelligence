@@ -41,7 +41,7 @@ public class Sheep extends UzhShortNameCreature {
 
         State state = new State(map, this.currentTurn, this.x, this.y, 0);
         // always player 1...
-        Player player = new Player(this.type, this.playerID);
+        Player player = new Player(Type.SHEEP1, 1);
         logger.info("current x: " + this.x + ", current y: " + this.y);
 
         MiniMax miniMax = new SheepMiniMax(player);
