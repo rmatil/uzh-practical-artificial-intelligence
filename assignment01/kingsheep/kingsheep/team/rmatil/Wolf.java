@@ -13,8 +13,6 @@ import java.util.logging.Logger;
 
 public class Wolf extends UzhShortNameCreature {
 
-    private static final Logger logger = Logger.getLogger(Wolf.class.getName());
-
     private Action.Move lastMove;
 
     public Wolf(Type type, Simulator parent, int playerID, int x, int y) {
@@ -41,7 +39,6 @@ public class Wolf extends UzhShortNameCreature {
 
         State state = new State(map, this.currentTurn, this.x, this.y, 0);
         Player player = new Player(Type.WOLF1, 1);
-        logger.info("current x: " + this.x + ", current y: " + this.y);
 
         MiniMax miniMax = new WolfMiniMax(player);
         Action actionToExecute = miniMax.minimaxDecision(state, lastMove);
@@ -65,7 +62,6 @@ public class Wolf extends UzhShortNameCreature {
                 break;
         }
 
-        logger.info("Wolf made move " + move.name());
         super.think(map);
     }
 }

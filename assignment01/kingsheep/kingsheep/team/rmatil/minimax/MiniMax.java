@@ -3,11 +3,8 @@ package kingsheep.team.rmatil.minimax;
 import kingsheep.Type;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public abstract class MiniMax {
-
-    private static final Logger logger = Logger.getLogger(MiniMax.class.getName());
 
     public static final int MAX_DEPTH = 4;
 
@@ -20,9 +17,7 @@ public abstract class MiniMax {
     public Action minimaxDecision(State state, Action.Move lastMove) {
         Map<Float, Action[]> possibleActions = new TreeMap<>();
 
-        logger.info("s----------------------------------------");
         for (Action action : actions(state)) {
-            logger.info(String.format("Direction: %s", action.getMove()));
             State tmp = result(state, action);
 
             // check whether we are min or max player
@@ -44,7 +39,6 @@ public abstract class MiniMax {
                 possibleActions.get(incentive)[oldValues.length] = action;
             }
         }
-        logger.info("e----------------------------------------");
 
         Action[][] orderedActions = new Action[possibleActions.values().size()][];
         possibleActions.values().toArray(orderedActions);
@@ -124,9 +118,7 @@ public abstract class MiniMax {
 
         float v = Integer.MAX_VALUE;
         Action[] actions = actions(state);
-        logger.info(String.format("s%d------------------------------", state.getCurrentDepth()));
         for (Action action : actions) {
-            logger.info(String.format("Direction: %s", action.getMove()));
             State appliedState = result(state, action);
             v = Math.min(v, maxValue(appliedState, alpha, beta));
 
@@ -135,7 +127,6 @@ public abstract class MiniMax {
             }
             beta = Math.min(beta, v);
         }
-        logger.info(String.format("e%d------------------------------", state.getCurrentDepth()));
 
         return v;
     }
@@ -151,9 +142,7 @@ public abstract class MiniMax {
 
         float v = Integer.MIN_VALUE;
         Action[] actions = actions(state);
-        logger.info(String.format("s%d------------------------------", state.getCurrentDepth()));
         for (Action action : actions) {
-            logger.info(String.format("Direction: %s", action.getMove()));
             State appliedState = result(state, action);
             v = Math.max(v, minValue(appliedState, alpha, beta));
 
@@ -163,7 +152,6 @@ public abstract class MiniMax {
             alpha = Math.max(alpha, v);
 
         }
-        logger.info(String.format("e%d------------------------------", state.getCurrentDepth()));
 
         return v;
     }

@@ -12,8 +12,6 @@ import java.util.logging.Logger;
 
 public class Sheep extends UzhShortNameCreature {
 
-    private static final Logger logger = Logger.getLogger(Sheep.class.getName());
-
     private Action.Move lastMove;
 
     public Sheep(Type type, Simulator parent, int playerID, int x, int y) {
@@ -42,7 +40,6 @@ public class Sheep extends UzhShortNameCreature {
         State state = new State(map, this.currentTurn, this.x, this.y, 0);
         // always player 1...
         Player player = new Player(Type.SHEEP1, 1);
-        logger.info("current x: " + this.x + ", current y: " + this.y);
 
         MiniMax miniMax = new SheepMiniMax(player);
         Action actionToExecute = miniMax.minimaxDecision(state, lastMove);
@@ -65,8 +62,6 @@ public class Sheep extends UzhShortNameCreature {
                 move = Move.WAIT;
                 break;
         }
-
-        logger.info("Sheep made move " + move.name());
 
         super.think(map);
     }
