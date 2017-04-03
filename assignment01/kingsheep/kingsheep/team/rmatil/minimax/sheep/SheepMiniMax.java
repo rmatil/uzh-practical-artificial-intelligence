@@ -19,7 +19,8 @@ public class SheepMiniMax extends MiniMax {
     public static final int MAX_POSITIVE_INCENTIVE = 5;
     public static final int POSITIVE_INCENTIVE     = 1;
     public static final int INDIFFERENT_INCENTIVE  = 0;
-    public static final int MAX_NEGATIVE_INCENTIVE = - 2;
+    public static final int NEGATIVE_INCENTIVE     = - 1;
+    public static final int MAX_NEGATIVE_INCENTIVE = - 6;
 
     public SheepMiniMax(Player player) {
         super(player);
@@ -66,6 +67,26 @@ public class SheepMiniMax extends MiniMax {
                     return (1f / currentState.getCurrentDepth()) * SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
                 }
 
+                int wolfX = -1;
+                int wolfY = -1;
+                for (int y = 0; y < currentState.getMap().length; y++) {
+                    for (int x = 0; x < currentState.getMap()[0].length; x++) {
+                        if (currentState.getMap()[y][x] == this.player.getOppositeOpponentType()) {
+                            wolfX = x;
+                            wolfY = y;
+                            break;
+                        }
+                    }
+                }
+
+                int manhattanWolfDistance = Math.abs(currentState.getCurrentX() - wolfX) + Math.abs(currentState.getCurrentY() - wolfY);
+
+                if (manhattanWolfDistance <= 1) {
+                    // flee
+                    return SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
+                }
+
+
                 if (collision.getCollisionParticipants().contains(Type.RHUBARB)) {
                     logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.MAX_POSITIVE_INCENTIVE));
                     return (1f / currentState.getCurrentDepth()) * SheepMiniMax.MAX_POSITIVE_INCENTIVE;
@@ -96,28 +117,33 @@ public class SheepMiniMax extends MiniMax {
 
         int currentX = currentState.getCurrentX();
         int currentY = currentState.getCurrentY();
-        int manhattanWolfDistance;
 
         List<Integer> rhubarbDistances = new ArrayList<>();
         List<Integer> grassDistances = new ArrayList<>();
 
         int wolfX = - 1;
         int wolfY = - 1;
+        int sheepX = - 1;
+        int sheepY = - 1;
         for (int y = 0; y < currentState.getMap().length; y++) {
             for (int x = 0; x < currentState.getMap()[0].length; x++) {
                 if (currentState.getMap()[y][x] == this.player.getOppositeOpponentType()) {
                     wolfX = x;
                     wolfY = y;
-                    break;
+                } else if (currentState.getMap()[y][x] == this.player.getEqualOpponentType()) {
+                    sheepX = x;
+                    sheepY = y;
                 }
             }
 
-            if (wolfX != - 1 && wolfY != - 1) {
+            if (wolfX != - 1 && wolfY != - 1 && sheepX != -1 && sheepY != -1) {
                 break;
             }
         }
 
-        manhattanWolfDistance = Math.abs(currentX - wolfX) + Math.abs(currentY - wolfY);
+        int manhattanWolfDistance = Math.abs(currentX - wolfX) + Math.abs(currentY - wolfY);
+        int manhattanSheepDistance = Math.abs(currentX - sheepX) + Math.abs(currentY - sheepY);
+
 
         for (int y = 0; y < currentState.getMap().length; y++) {
             for (int x = 0; x < currentState.getMap()[0].length; x++) {
@@ -143,8 +169,8 @@ public class SheepMiniMax extends MiniMax {
         }
 
         if (grassDistances.size() > 0 && rhubarbDistances.size() > 0) {
-            float rhubarbIncentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
-            float grassIncentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
+            float rhubarbIncentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, manhattanSheepDistance, Type.RHUBARB);
+            float grassIncentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, manhattanSheepDistance, Type.GRASS);
 
             if (grassIncentive > rhubarbIncentive) {
                 logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), grassIncentive));
@@ -153,23 +179,24 @@ public class SheepMiniMax extends MiniMax {
 
         } else if (rhubarbDistances.size() > 0) {
             // no grass anymore or rhubarb distance is better
-            float incentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
+            float incentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, manhattanSheepDistance, Type.RHUBARB);
             logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), incentive));
             return incentive;
         } else if (grassDistances.size() > 0) {
             // only grass left...
-            float incentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
+            float incentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, manhattanSheepDistance, Type.GRASS);
             logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), incentive));
             return incentive;
         }
 
         // we choose the distance to the wolf if neither grass nor rhubarb exists
-        float incentive = calculateWolfIncentive(manhattanWolfDistance);
+        int emptySpaceAround = countEmptySpace(currentState, 2);
+        float incentive = calculateWolfIncentive(manhattanWolfDistance, emptySpaceAround);
         logger.info(String.format("[depth: %d][x: %d, y: %d][wolf] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), incentive));
         return incentive;
     }
 
-    private float calculateIncentive(int distance, int wolfDistance, Type type) {
+    private float calculateIncentive(int distance, int wolfDistance, int sheepDistance, Type type) {
         float itemIncentive;
 
         switch (type) {
@@ -183,10 +210,72 @@ public class SheepMiniMax extends MiniMax {
                 throw new RuntimeException("Type " + type + " not recognized");
         }
 
+        // (distance / (float) sheepDistance)
         return (1f / distance) * (1f / itemIncentive) - Math.abs((1f / wolfDistance) * (SheepMiniMax.MAX_NEGATIVE_INCENTIVE / 1f));
     }
 
-    private float calculateWolfIncentive(int wolfDistance) {
-        return (- 1f) * Math.abs((1f / wolfDistance) * (SheepMiniMax.MAX_NEGATIVE_INCENTIVE / 1f));
+    private float calculateWolfIncentive(int wolfDistance, int emptySpaceAround) {
+        //((float) emptySpaceAround)
+        return  (1f / emptySpaceAround) -  Math.abs((1f / wolfDistance) * (SheepMiniMax.MAX_NEGATIVE_INCENTIVE / 1f));
+    }
+
+    private int countEmptySpace(State currentState, int depth) {
+        int currentX = currentState.getCurrentX();
+        int currentY = currentState.getCurrentY();
+        int emptySpaceCounter = 0;
+
+        // count right
+        for (int i=currentX; i < Math.min(currentState.getMap()[currentY].length, currentX + depth); i++) {
+            if (currentState.getMap()[currentY][i] != Type.FENCE &&
+                currentState.getMap()[currentY][i] != this.player.getOppositeOpponentType() &&
+                currentState.getMap()[currentY][i] != this.player.getEqualOpponentType() &&
+                currentState.getMap()[currentY][i] != this.player.getTeamMateType()) {
+                emptySpaceCounter++;
+            } else {
+                // there might be an item blocking our escape way
+                break;
+            }
+        }
+
+        // count left
+        for (int i=currentX; i > Math.max(-1, currentX - depth); i--) {
+            if (currentState.getMap()[currentY][i] != Type.FENCE &&
+                    currentState.getMap()[currentY][i] != this.player.getOppositeOpponentType() &&
+                    currentState.getMap()[currentY][i] != this.player.getEqualOpponentType() &&
+                    currentState.getMap()[currentY][i] != this.player.getTeamMateType()) {
+                emptySpaceCounter++;
+            } else {
+                // there might be an item blocking our escape way
+                break;
+            }
+        }
+
+        // count upwards
+        for (int i=currentY; i < Math.min(currentState.getMap().length, currentY + depth); i++) {
+            if (currentState.getMap()[i][currentX] != Type.FENCE &&
+                    currentState.getMap()[i][currentX] != this.player.getOppositeOpponentType() &&
+                    currentState.getMap()[i][currentX] != this.player.getEqualOpponentType() &&
+                    currentState.getMap()[i][currentX] != this.player.getTeamMateType()) {
+                emptySpaceCounter++;
+            } else {
+                // there might be an item blocking our escape way
+                break;
+            }
+        }
+
+        // count downwards
+        for (int i=currentY; i > Math.max(-1, currentY - depth); i--) {
+            if (currentState.getMap()[i][currentX] != Type.FENCE &&
+                    currentState.getMap()[i][currentX] != this.player.getOppositeOpponentType() &&
+                    currentState.getMap()[i][currentX] != this.player.getEqualOpponentType() &&
+                    currentState.getMap()[i][currentX] != this.player.getTeamMateType()) {
+                emptySpaceCounter++;
+            } else {
+                // there might be an item blocking our escape way
+                break;
+            }
+        }
+
+        return emptySpaceCounter;
     }
 }

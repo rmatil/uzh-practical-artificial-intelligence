@@ -9,7 +9,7 @@ public abstract class MiniMax {
 
     private static final Logger logger = Logger.getLogger(MiniMax.class.getName());
 
-    public static final int MAX_DEPTH = 4;
+    public static final int MAX_DEPTH = 8;
 
     protected Player player;
 
