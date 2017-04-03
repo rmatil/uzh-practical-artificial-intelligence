@@ -10,11 +10,8 @@ import kingsheep.team.rmatil.minimax.State;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class WolfMiniMax extends MiniMax {
-
-    private static final Logger logger = Logger.getLogger(WolfMiniMax.class.getName());
 
     public static final int MAX_POSITIVE_INCENTIVE    = 5;
     public static final int BETTER_POSITIVE_INCENTIVE = 2;
@@ -106,7 +103,6 @@ public class WolfMiniMax extends MiniMax {
         manhattanSheepDistance = Math.abs(currentX - sheepX) + Math.abs(currentY - sheepY);
         // we choose the distance to the wolf if neither grass nor rhubarb exists
         float sheepIncentive = calculateSheepIncentive(manhattanSheepDistance);
-        logger.info(String.format("[depth: %d][x: %d, y: %d][sheep] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), sheepIncentive));
 
         for (int y = 0; y < currentState.getMap().length; y++) {
             for (int x = 0; x < currentState.getMap()[0].length; x++) {
@@ -133,11 +129,9 @@ public class WolfMiniMax extends MiniMax {
 
             if (rhubarbIncentive > sheepIncentive && grassIncentive > sheepIncentive) {
                 if (rhubarbIncentive > grassIncentive) {
-                    logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), rhubarbIncentive));
                     return rhubarbIncentive;
                 }
 
-                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), grassIncentive));
                 return grassIncentive;
             }
         }
@@ -147,7 +141,6 @@ public class WolfMiniMax extends MiniMax {
             float rhubarbIncentive = calculateFoodIncentive(rhubarbDistances.get(0), manhattanSheepDistance, Type.RHUBARB);
 
             if (rhubarbIncentive > sheepIncentive) {
-                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), rhubarbIncentive));
                 return rhubarbIncentive;
             }
         }
@@ -157,7 +150,6 @@ public class WolfMiniMax extends MiniMax {
             float grassIncentive = calculateFoodIncentive(grassDistances.get(0), manhattanSheepDistance, Type.GRASS);
 
             if (grassIncentive > sheepIncentive) {
-                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), grassIncentive));
                 return grassIncentive;
             }
         }

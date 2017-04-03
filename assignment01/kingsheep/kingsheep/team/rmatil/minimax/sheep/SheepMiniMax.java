@@ -10,11 +10,8 @@ import kingsheep.team.rmatil.minimax.State;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class SheepMiniMax extends MiniMax {
-
-    private static final Logger logger = Logger.getLogger(SheepMiniMax.class.getName());
 
     public static final int MAX_POSITIVE_INCENTIVE = 5;
     public static final int POSITIVE_INCENTIVE     = 1;
@@ -62,7 +59,6 @@ public class SheepMiniMax extends MiniMax {
             for (Collision collision : currentState.getCollisions()) {
                 // check whether a wolf has eaten us
                 if (collision.getCollisionParticipants().contains(this.player.getOppositeOpponentType())) {
-                    logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.MAX_NEGATIVE_INCENTIVE));
                     return (1f / currentState.getCurrentDepth()) * SheepMiniMax.MAX_NEGATIVE_INCENTIVE;
                 }
 
@@ -86,19 +82,16 @@ public class SheepMiniMax extends MiniMax {
                 }
 
                 if (collision.getCollisionParticipants().contains(Type.RHUBARB)) {
-                    logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.MAX_POSITIVE_INCENTIVE));
                     return (1f / currentState.getCurrentDepth()) * SheepMiniMax.MAX_POSITIVE_INCENTIVE;
                 }
 
                 if (collision.getCollisionParticipants().contains(Type.GRASS)) {
-                    logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.POSITIVE_INCENTIVE));
                     return (1f / currentState.getCurrentDepth()) * SheepMiniMax.POSITIVE_INCENTIVE;
                 }
             }
         }
 
         // we are indifferent otherwise
-        logger.info(String.format("[depth: %d][x: %d, y: %d] terminal utility: %d", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), SheepMiniMax.INDIFFERENT_INCENTIVE));
         return (1 / currentState.getCurrentDepth()) * SheepMiniMax.INDIFFERENT_INCENTIVE;
     }
 
@@ -161,27 +154,20 @@ public class SheepMiniMax extends MiniMax {
             float grassIncentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
 
             if (grassIncentive > rhubarbIncentive) {
-                logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), grassIncentive));
                 return grassIncentive;
             }
 
         } else if (rhubarbDistances.size() > 0) {
             // no grass anymore or rhubarb distance is better
-            float incentive = calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
-            logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), incentive));
-            return incentive;
+            return calculateIncentive(rhubarbDistances.get(0), manhattanWolfDistance, Type.RHUBARB);
         } else if (grassDistances.size() > 0) {
             // only grass left...
-            float incentive = calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
-            logger.info(String.format("[depth: %d][x: %d, y: %d][food] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), incentive));
-            return incentive;
+            return calculateIncentive(grassDistances.get(0), manhattanWolfDistance, Type.GRASS);
         }
 
         // we choose the distance to the wolf if neither grass nor rhubarb exists
         int emptySpaceAround = countEmptySpace(currentState, 2);
-        float incentive = calculateWolfIncentive(manhattanWolfDistance, emptySpaceAround);
-        logger.info(String.format("[depth: %d][x: %d, y: %d][wolf] heuristic utility: %.2f", currentState.getCurrentDepth(), currentState.getCurrentX(), currentState.getCurrentY(), incentive));
-        return incentive;
+        return calculateWolfIncentive(manhattanWolfDistance, emptySpaceAround);
     }
 
     private float calculateIncentive(int distance, int wolfDistance, Type type) {
