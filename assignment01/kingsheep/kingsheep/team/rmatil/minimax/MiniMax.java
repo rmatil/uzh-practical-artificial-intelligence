@@ -13,20 +13,8 @@ public abstract class MiniMax {
 
     protected Player player;
 
-    /**
-     * Alpha for alpha-beta pruning
-     */
-    private float a;
-
-    /**
-     * Beta for alpha-beta pruning
-     */
-    private float b;
-
     public MiniMax(Player player) {
         this.player = player;
-        this.a = Integer.MIN_VALUE;
-        this.b = Integer.MAX_VALUE;
     }
 
     public Action minimaxDecision(State state, Action.Move lastMove) {
@@ -40,9 +28,9 @@ public abstract class MiniMax {
             // check whether we are min or max player
             float incentive;
             if (this.player.getPlayerId() == 1) {
-                incentive = maxValue(tmp);
+                incentive = maxValue(tmp, Integer.MIN_VALUE, Integer.MAX_VALUE);
             } else {
-                incentive = minValue(tmp);
+                incentive = minValue(tmp, Integer.MIN_VALUE, Integer.MAX_VALUE);
             }
 
             // there might be moves with the same incentive
@@ -125,7 +113,7 @@ public abstract class MiniMax {
      */
     protected abstract float heuristicEval(State currentState);
 
-    private float minValue(final State state) {
+    private float minValue(final State state, float alpha, float beta) {
         if (terminalTest(state)) {
             return utility(state);
         }
@@ -140,19 +128,19 @@ public abstract class MiniMax {
         for (Action action : actions) {
             logger.info(String.format("Direction: %s", action.getMove()));
             State appliedState = result(state, action);
-            v = Math.min(v, maxValue(appliedState));
+            v = Math.min(v, maxValue(appliedState, alpha, beta));
 
-            if (v <= this.a) {
+            if (v <= alpha) {
                 return v;
             }
-            this.b = Math.min(this.b, v);
+            beta = Math.min(beta, v);
         }
         logger.info(String.format("e%d------------------------------", state.getCurrentDepth()));
 
         return v;
     }
 
-    private float maxValue(final State state) {
+    private float maxValue(final State state, float alpha, float beta) {
         if (terminalTest(state)) {
             return utility(state);
         }
@@ -167,12 +155,12 @@ public abstract class MiniMax {
         for (Action action : actions) {
             logger.info(String.format("Direction: %s", action.getMove()));
             State appliedState = result(state, action);
-            v = Math.max(v, minValue(appliedState));
+            v = Math.max(v, minValue(appliedState, alpha, beta));
 
-            if (v >= this.b) {
+            if (v >= beta) {
                 return v;
             }
-            this.a = Math.max(this.a, v);
+            alpha = Math.max(alpha, v);
 
         }
         logger.info(String.format("e%d------------------------------", state.getCurrentDepth()));
