@@ -1,9 +1,6 @@
 import raphaelmatile.BackTracker;
+import raphaelmatile.problem.Square;
 import raphaelmatile.constrainable.SudokuGrid;
-import raphaelmatile.domainassigner.IDomainAssigner;
-import raphaelmatile.domainassigner.IntegerDomainAssigner;
-import raphaelmatile.problemassigner.IProblemAssigner;
-import raphaelmatile.problemassigner.SquareAssigner;
 
 public class RaphaelMatile implements SudokuAgent {
 
@@ -16,8 +13,9 @@ public class RaphaelMatile implements SudokuAgent {
 
     public int[][] solve(int dimension, int[][] puzzle) {
         SudokuGrid grid = new SudokuGrid(dimension, puzzle);
+        BackTracker<Square, Integer> backTracker = new BackTracker<>(grid);
 
-        BackTracker backTracker = new BackTracker(grid);
+
         boolean result = backTracker.backtrack();
 
         if (! result) {

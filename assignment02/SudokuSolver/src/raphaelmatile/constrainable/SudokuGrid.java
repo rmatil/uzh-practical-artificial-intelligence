@@ -1,29 +1,32 @@
 package raphaelmatile.constrainable;
 
-import raphaelmatile.Square;
-import raphaelmatile.constraint.IConstraint;
-import raphaelmatile.constraint.IntegerConstraint;
-import raphaelmatile.domainassigner.IDomainAssigner;
-import raphaelmatile.domainassigner.IntegerDomainAssigner;
-import raphaelmatile.problemassigner.IProblemAssigner;
-import raphaelmatile.problemassigner.MinRemainingValuesSquareAssigner;
-import raphaelmatile.problemvalue.IntegerProblemValue;
+import raphaelmatile.domainprovider.IDomainProvider;
+import raphaelmatile.domainprovider.IntegerDomainProvider;
+import raphaelmatile.problem.Square;
+import raphaelmatile.problemprovider.IProblemProvider;
+import raphaelmatile.problemprovider.MinRemainingValuesSquareProvider;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class SudokuGrid implements IConstrainable<Square> {
+/**
+ * Represents the sudoku world in terms of a Constraint Satisfaction Problem, specified by a square,
+ * and its domain, specified by an integer.
+ */
+public class SudokuGrid implements IConstrainable<Square, Integer> {
 
-    private       IProblemAssigner<Square>           problemAssigner;
-    private       IDomainAssigner<Integer>           domainAssigner;
+    private       IProblemProvider<Square>           problemAssigner;
     private       Map<Integer, Map<Integer, Square>> field;
     private       List<Square>                       updatedFields;
     private final int[][]                            originalGrid;
     private       int                                dimension;
     private       int                                gridLength;
 
+    /**
+     * Creates a new sudoku Constraint Satisfaction Problem
+     *
+     * @param dimension    The dimension of a small square of a sudoku out of which the grid is composed
+     * @param originalGrid The original grid. Must be of size <code>dimension</code><sup>2</sup>
+     */
     public SudokuGrid(final int dimension, final int[][] originalGrid) {
         this.updatedFields = new ArrayList<>();
         this.dimension = dimension;
@@ -33,41 +36,40 @@ public class SudokuGrid implements IConstrainable<Square> {
 
         this.initializeField();
 
-        this.problemAssigner = new MinRemainingValuesSquareAssigner(this.field);
-        this.domainAssigner = new IntegerDomainAssigner(1, this.gridLength);
+        this.problemAssigner = new MinRemainingValuesSquareProvider(this.field);
     }
 
     @Override
-    public IProblemAssigner<Square> getProblemAssigner() {
+    public IProblemProvider<Square> getProblemAssigner() {
         return this.problemAssigner;
     }
 
     @Override
-    public void updateConstraints(Square square) {
+    public void updateConstraints(Square updatedProblem) {
         // search for horizontal and vertical squares at the same x resp. y position
         // and add the value of the given square as constraint
         for (int xy = 0; xy < this.gridLength; xy++) {
-            Square tmp = this.field.get(xy).get(square.getXPos());
+            Square tmp = this.field.get(xy).get(updatedProblem.getXPos());
 
             if (! tmp.isSolved() &&
-                    square.getYPos() != xy &&
-                    ! tmp.getConstraint().isConstrainedBy(square.getProblemValue().getValue())
+                    updatedProblem.getYPos() != xy &&
+                    ! tmp.isConstrainedBy(updatedProblem.getValue())
                     ) {
 
                 // add constraint for the value we are currently evaluating at the given square
-                tmp.getConstraint().addConstraint(square.getProblemValue().getValue());
+                tmp.addConstraint(updatedProblem.getValue());
                 if (! updatedFields.contains(tmp)) {
                     updatedFields.add(tmp);
                 }
             }
 
-            tmp = this.field.get(square.getYPos()).get(xy);
+            tmp = this.field.get(updatedProblem.getYPos()).get(xy);
             if (! tmp.isSolved() &&
-                    square.getXPos() != xy &&
-                    ! tmp.getConstraint().isConstrainedBy(square.getProblemValue().getValue())) {
+                    updatedProblem.getXPos() != xy &&
+                    ! tmp.isConstrainedBy(updatedProblem.getValue())) {
 
                 // add constraint for the value we are currently evaluating at the given square
-                tmp.getConstraint().addConstraint(square.getProblemValue().getValue());
+                tmp.addConstraint(updatedProblem.getValue());
                 if (! updatedFields.contains(tmp)) {
                     updatedFields.add(tmp);
                 }
@@ -76,8 +78,8 @@ public class SudokuGrid implements IConstrainable<Square> {
 
         // now we also have to search within the small box of size=dimension for any squares and add the constraint to them:
         // Divide by the dimension to get the factor of which box we are in. Multiply by the dimension, to get the correct lower boundary
-        int yLowerBoundary = (square.getYPos() / this.dimension) * this.dimension;
-        int xLowerBoundary = (square.getXPos() / this.dimension) * this.dimension;
+        int yLowerBoundary = (updatedProblem.getYPos() / this.dimension) * this.dimension;
+        int xLowerBoundary = (updatedProblem.getXPos() / this.dimension) * this.dimension;
 
         for (int y = yLowerBoundary; y < yLowerBoundary + this.dimension; y++) {
             for (int x = xLowerBoundary; x < xLowerBoundary + this.dimension; x++) {
@@ -85,10 +87,10 @@ public class SudokuGrid implements IConstrainable<Square> {
 
                 // check whether the square is already solved, and whether we are looking at the square given
                 if (! tmp.isSolved() &&
-                        ! tmp.getConstraint().isConstrainedBy(square.getProblemValue().getValue()) &&
-                        x != square.getXPos() &&
-                        y != square.getYPos()) {
-                    tmp.getConstraint().addConstraint(square.getProblemValue().getValue());
+                        ! tmp.isConstrainedBy(updatedProblem.getValue()) &&
+                        x != updatedProblem.getXPos() &&
+                        y != updatedProblem.getYPos()) {
+                    tmp.addConstraint(updatedProblem.getValue());
                     if (! updatedFields.contains(tmp)) {
                         updatedFields.add(tmp);
                     }
@@ -98,37 +100,37 @@ public class SudokuGrid implements IConstrainable<Square> {
     }
 
     @Override
-    public boolean isValid(Square square, Integer value) {
+    public boolean isValid(Square problem, Integer domainValue) {
         // search for horizontal and vertical squares at the same x resp. y position
         // and verify, whether they have the same value or not
         for (int xy = 0; xy < this.gridLength; xy++) {
             // traverse all vertical fields on the same y position first...
-            Square tmp = this.field.get(xy).get(square.getXPos());
-            if (tmp.getYPos() != square.getYPos() &&
-                    tmp.getProblemValue().getValue().equals(value)) {
+            Square tmp = this.field.get(xy).get(problem.getXPos());
+            if (tmp.getYPos() != problem.getYPos() &&
+                    tmp.getValue().equals(domainValue)) {
                 return false;
             }
 
             // ... then traverse all horizontal fields on the same x position
-            tmp = this.field.get(square.getYPos()).get(xy);
-            if (tmp.getXPos() != square.getXPos() &&
-                    tmp.getProblemValue().getValue().equals(value)) {
+            tmp = this.field.get(problem.getYPos()).get(xy);
+            if (tmp.getXPos() != problem.getXPos() &&
+                    tmp.getValue().equals(domainValue)) {
                 return false;
             }
         }
 
         // now we also have to search within the small box of size=dimension for any squares and add the constraint to them:
         // Divide by the dimension to get the factor of which box we are in. Multiply by the dimension, to get the correct lower boundary
-        int yLowerBoundary = (square.getYPos() / this.dimension) * this.dimension;
-        int xLowerBoundary = (square.getXPos() / this.dimension) * this.dimension;
+        int yLowerBoundary = (problem.getYPos() / this.dimension) * this.dimension;
+        int xLowerBoundary = (problem.getXPos() / this.dimension) * this.dimension;
 
         for (int y = yLowerBoundary; y < yLowerBoundary + this.dimension; y++) {
             for (int x = xLowerBoundary; x < xLowerBoundary + this.dimension; x++) {
                 Square tmp = this.field.get(y).get(x);
 
                 // check whether the square contains the same value...
-                if (x != square.getXPos() && y != square.getYPos() &&
-                        tmp.getProblemValue().getValue().equals(value)) {
+                if (x != problem.getXPos() && y != problem.getYPos() &&
+                        tmp.getValue().equals(domainValue)) {
                     return false;
                 }
             }
@@ -138,10 +140,48 @@ public class SudokuGrid implements IConstrainable<Square> {
     }
 
     @Override
-    public void resetConstraintsAfterUpdate(Square square) {
+    public IDomainProvider<Integer> getNewDomainAssigner() {
+        return new IntegerDomainProvider(1, this.gridLength);
+    }
+
+    @Override
+    public void resetConstraintsAfterUpdate(Square updatedProblem) {
         for (Square tmp : this.updatedFields) {
-            tmp.getConstraint().removeConstraint(square.getProblemValue().getValue());
+            tmp.removeConstraint(updatedProblem.getValue());
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder ret = new StringBuilder();
+
+        for (int y = 0; y < this.dimension * this.dimension; y++) {
+            for (int x = 0; x < this.dimension * this.dimension; x++) {
+                ret.append(this.field.get(y).get(x).getValue()).append(" ");
+            }
+
+            ret.append("\n");
+        }
+
+        return ret.toString();
+    }
+
+    /**
+     * Returns an array representation of the current sudoku grid.
+     *
+     * @return The sudoku grid
+     */
+    public int[][] asArray() {
+        int[][] field = new int[this.gridLength][this.gridLength];
+
+        for (int y = 0; y < this.dimension * this.dimension; y++) {
+            for (int x = 0; x < this.dimension * this.dimension; x++) {
+
+                field[y][x] = this.field.get(y).get(x).getValue();
+            }
+        }
+
+        return field;
     }
 
     private void initializeField() {
@@ -151,40 +191,13 @@ public class SudokuGrid implements IConstrainable<Square> {
                     this.field.put(y, new HashMap<>());
                 }
 
-                IConstraint<Integer> constraint = new IntegerConstraint();
+                Set<Integer> constraints = new HashSet<>();
                 if (this.originalGrid[y][x] != Square.EMPTY) {
-                    constraint.addConstraint(this.originalGrid[y][x]);
+                    constraints.add(this.originalGrid[y][x]);
                 }
 
-                this.field.get(y).put(x, new Square(x, y, constraint, new IntegerProblemValue(this.originalGrid[y][x])));
+                this.field.get(y).put(x, new Square(x, y, constraints, this.originalGrid[y][x]));
             }
         }
-    }
-
-    public int[][] asArray() {
-        int[][] field = new int[this.gridLength][this.gridLength];
-
-        for (int y = 0; y < this.dimension * this.dimension; y++) {
-            for (int x = 0; x < this.dimension * this.dimension; x++) {
-
-                field[y][x] = this.field.get(y).get(x).getProblemValue().getValue();
-            }
-        }
-
-        return field;
-    }
-
-    public String toString() {
-        String ret = "";
-
-        for (int y = 0; y < this.dimension * this.dimension; y++) {
-            for (int x = 0; x < this.dimension * this.dimension; x++) {
-                ret += this.field.get(y).get(x).getProblemValue().getValue() + " ";
-            }
-
-            ret += "\n";
-        }
-
-        return ret;
     }
 }

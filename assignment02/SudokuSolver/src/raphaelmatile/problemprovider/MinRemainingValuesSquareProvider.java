@@ -1,17 +1,27 @@
-package raphaelmatile.problemassigner;
+package raphaelmatile.problemprovider;
 
-import raphaelmatile.Square;
+import raphaelmatile.problem.Square;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class MinRemainingValuesSquareAssigner implements IProblemAssigner<Square> {
+/**
+ * Provides new problems of type {@link Square} decreasingly ordered by the amount of constraints they are restricted to.
+ * In the world of Constraint Satisfaction Problems, this approach is either called
+ * having a <i>minimum remaining variable</i> or a <i>most constrained variable</i>.
+ */
+public class MinRemainingValuesSquareProvider implements IProblemProvider<Square> {
 
     private Set<Square> constrainedProblem = new HashSet<>();
 
-    public MinRemainingValuesSquareAssigner(final Map<Integer, Map<Integer, Square>> field) {
+    /**
+     * Creates a new instance using the given field as a source of problems.
+     *
+     * @param field The field containing problems
+     */
+    public MinRemainingValuesSquareProvider(final Map<Integer, Map<Integer, Square>> field) {
         for (int y = 0; y < field.size(); y++) {
             for (int x = 0; x < field.get(0).size(); x++) {
                 if (! field.get(y).get(x).isSolved()) {
@@ -47,11 +57,11 @@ public class MinRemainingValuesSquareAssigner implements IProblemAssigner<Square
                 return 1;
             }
 
-            if (o1.getConstraint().size() == o2.getConstraint().size()) {
+            if (o1.constraintSize() == o2.constraintSize()) {
                 return 0;
             }
 
-            return (o1.getConstraint().size() < o2.getConstraint().size()) ? - 1 : 1;
+            return (o1.constraintSize() < o2.constraintSize()) ? - 1 : 1;
         });
     }
 }
