@@ -4,6 +4,8 @@ import raphaelmatile.domainprovider.IDomainProvider;
 import raphaelmatile.problem.IProblem;
 import raphaelmatile.problemprovider.IProblemProvider;
 
+import java.util.List;
+
 /**
  * Represents a world with a problem on a particular domain,
  * which can be solved using a Constraint Satisfaction Problem
@@ -19,24 +21,25 @@ public interface IConstrainable<P extends IProblem<D, D>, D> {
      *
      * @return The problem assigner
      */
-    IProblemProvider<P> getProblemAssigner();
+    IProblemProvider<P> getProblemProvider();
 
     /**
      * Updates the current constraints on the problem.
-     * Use {@link IConstrainable#resetConstraintsAfterUpdate(IProblem)} to reset applied changes on this constraint
+     * Use {@link IConstrainable#resetConstraintsAfterUpdate(List, IProblem)} to reset applied changes on this constraint
      * if the given problem does not lead to a solution.
      *
      * @param updatedProblem An updated problem whose changes should also be reflected on this constraint
      */
-    void updateConstraints(P updatedProblem);
+    List<P> updateConstraints(P updatedProblem);
 
     /**
      * Resets all changes made by an updated problem on this constraint.
      * If no updates were caused by the given problem, applying this method has no effect.
      *
+     * @param updatedFields A list of fields which were previously updated with the value of the updated problem
      * @param updatedProblem The updated problem which may have caused some updates on this constraint
      */
-    void resetConstraintsAfterUpdate(P updatedProblem);
+    void resetConstraintsAfterUpdate(List<P> updatedFields, P updatedProblem);
 
     /**
      * Returns true, if the given domain value can be safely applied to the given problem.

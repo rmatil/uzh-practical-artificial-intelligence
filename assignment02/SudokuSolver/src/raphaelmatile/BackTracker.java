@@ -4,6 +4,8 @@ import raphaelmatile.constrainable.IConstrainable;
 import raphaelmatile.domainprovider.IDomainProvider;
 import raphaelmatile.problem.IProblem;
 
+import java.util.List;
+
 /**
  * Implements the generic approach to solve Constraint Satisfaction Problems using
  * the backtracking algorithm described in  <i>Artificial Intelligence - A Modern Approach, 3rd Edition</i>
@@ -31,12 +33,12 @@ public class BackTracker<P extends IProblem<D, D>, D> {
      * @return True, if a solution was found, false otherwise
      */
     public boolean backtrack() {
-        if (! this.constrainable.getProblemAssigner().hasProblemsToSolve()) {
+        if (! this.constrainable.getProblemProvider().hasProblemsToSolve()) {
             return true;
         }
 
         // find unsolved problems in the world
-        P nextSquareToSolve = this.constrainable.getProblemAssigner().getNextProblemToSolve();
+        P nextSquareToSolve = this.constrainable.getProblemProvider().getNextProblemToSolve();
 
         // get a new instance of a domain provider so that recursive calls work independently
         IDomainProvider<D> domainAssigner = this.constrainable.getNewDomainAssigner();
@@ -56,12 +58,12 @@ public class BackTracker<P extends IProblem<D, D>, D> {
             }
 
             // remove the problem from the unsolved problems
-            this.constrainable.getProblemAssigner().removeProblem(nextSquareToSolve);
+            this.constrainable.getProblemProvider().removeProblem(nextSquareToSolve);
 
             // set value and find all new constraints based on this assignment
             D originalValue = nextSquareToSolve.getValue();
             nextSquareToSolve.setValue(nextDomainValue);
-            this.constrainable.updateConstraints(nextSquareToSolve);
+            List<P> updatedSquares = this.constrainable.updateConstraints(nextSquareToSolve);
 
             // try to find a path which leads us to a state where there are no problems to solve anymore
             if (this.backtrack()) {
@@ -71,9 +73,9 @@ public class BackTracker<P extends IProblem<D, D>, D> {
 
             // the chosen path did not lead to a solution which resolves the problem
             // so we have to re-add it for later evaluation
-            this.constrainable.resetConstraintsAfterUpdate(nextSquareToSolve);
+            this.constrainable.resetConstraintsAfterUpdate(updatedSquares, nextSquareToSolve);
             nextSquareToSolve.setValue(originalValue);
-            this.constrainable.getProblemAssigner().addProblem(nextSquareToSolve);
+            this.constrainable.getProblemProvider().addProblem(nextSquareToSolve);
         }
 
         return false;

@@ -14,12 +14,11 @@ import java.util.*;
  */
 public class SudokuGrid implements IConstrainable<Square, Integer> {
 
-    private       IProblemProvider<Square>           problemAssigner;
+    private       IProblemProvider<Square>           problemProvider;
     private       Map<Integer, Map<Integer, Square>> field;
-    private       List<Square>                       updatedFields;
     private final int[][]                            originalGrid;
-    private       int                                dimension;
-    private       int                                gridLength;
+    private final int                                dimension;
+    private final int                                gridLength;
 
     /**
      * Creates a new sudoku Constraint Satisfaction Problem
@@ -28,7 +27,6 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
      * @param originalGrid The original grid. Must be of size <code>dimension</code><sup>2</sup>
      */
     public SudokuGrid(final int dimension, final int[][] originalGrid) {
-        this.updatedFields = new ArrayList<>();
         this.dimension = dimension;
         this.gridLength = this.dimension * this.dimension;
         this.originalGrid = originalGrid;
@@ -36,16 +34,18 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
 
         this.initializeField();
 
-        this.problemAssigner = new MinRemainingValuesSquareProvider(this.field);
+        this.problemProvider = new MinRemainingValuesSquareProvider(this.field);
     }
 
     @Override
-    public IProblemProvider<Square> getProblemAssigner() {
-        return this.problemAssigner;
+    public IProblemProvider<Square> getProblemProvider() {
+        return this.problemProvider;
     }
 
     @Override
-    public void updateConstraints(Square updatedProblem) {
+    public List<Square> updateConstraints(Square updatedProblem) {
+        List<Square> updatedFields = new ArrayList<>();
+
         // search for horizontal and vertical squares at the same x resp. y position
         // and add the value of the given square as constraint
         for (int xy = 0; xy < this.gridLength; xy++) {
@@ -97,6 +97,8 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
                 }
             }
         }
+
+        return updatedFields;
     }
 
     @Override
@@ -128,6 +130,10 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
             for (int x = xLowerBoundary; x < xLowerBoundary + this.dimension; x++) {
                 Square tmp = this.field.get(y).get(x);
 
+                if (y == problem.getYPos() && x == problem.getXPos()) {
+                    continue;
+                }
+
                 // check whether the square contains the same value...
                 if (x != problem.getXPos() && y != problem.getYPos() &&
                         tmp.getValue().equals(domainValue)) {
@@ -145,8 +151,8 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
     }
 
     @Override
-    public void resetConstraintsAfterUpdate(Square updatedProblem) {
-        for (Square tmp : this.updatedFields) {
+    public void resetConstraintsAfterUpdate(List<Square> updatedFields, Square updatedProblem) {
+        for (Square tmp : updatedFields) {
             tmp.removeConstraint(updatedProblem.getValue());
         }
     }
@@ -184,6 +190,10 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
         return field;
     }
 
+    /**
+     * Initialize the Grid with the predefined values and add
+     * all constraints based on them.
+     */
     private void initializeField() {
         for (int y = 0; y < this.dimension * this.dimension; y++) {
             for (int x = 0; x < this.dimension * this.dimension; x++) {
@@ -192,11 +202,16 @@ public class SudokuGrid implements IConstrainable<Square, Integer> {
                 }
 
                 Set<Integer> constraints = new HashSet<>();
-                if (this.originalGrid[y][x] != Square.EMPTY) {
-                    constraints.add(this.originalGrid[y][x]);
-                }
-
                 this.field.get(y).put(x, new Square(x, y, constraints, this.originalGrid[y][x]));
+            }
+        }
+
+        // Eventually, add all constraints of the predefined fields
+        for (Map.Entry<Integer, Map<Integer, Square>> row : this.field.entrySet()) {
+            for (Map.Entry<Integer, Square> entry : row.getValue().entrySet()) {
+                if (entry.getValue().getValue() != Square.EMPTY) {
+                    this.updateConstraints(entry.getValue());
+                }
             }
         }
     }

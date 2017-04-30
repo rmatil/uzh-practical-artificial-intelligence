@@ -2,6 +2,11 @@ package raphaelmatile.problem;
 
 import java.util.Set;
 
+/**
+ * A Square of a SudokuGrid, i.e. a single Field. In the world of our Constraint Satisfaction Problems,
+ * this class represents a particular problem, which can be solved on the domain of Integers with constraints
+ * of Integers.
+ */
 public class Square implements IProblem<Integer, Integer> {
 
     public static final int EMPTY = 0;
@@ -11,6 +16,12 @@ public class Square implements IProblem<Integer, Integer> {
     private int          xPos;
     private int          yPos;
 
+    /**
+     * @param xPos        The x-position of this square in the grid
+     * @param yPos        The y-position of this square in the grid
+     * @param constraints A set of constraints on the value of this square. Can be empty, if no constraint is set yet
+     * @param value       The actual value of this square
+     */
     public Square(int xPos, int yPos, Set<Integer> constraints, Integer value) {
         this.constraints = constraints;
         this.value = value;
@@ -58,11 +69,33 @@ public class Square implements IProblem<Integer, Integer> {
         return this.constraints.size();
     }
 
+    /**
+     * Returns the x-position of this square in the grid
+     *
+     * @return The x position
+     */
     public int getXPos() {
         return this.xPos;
     }
 
+    /**
+     * Returns the y-position of this square in the grid
+     *
+     * @return The y position
+     */
     public int getYPos() {
         return this.yPos;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (! (obj instanceof Square)) {
+            return false;
+        }
+
+        Square squ = (Square) obj;
+
+        // we only compare the current position of the grid
+        return (this.xPos == squ.getXPos()) && (this.yPos == squ.getYPos());
     }
 }
