@@ -39,7 +39,7 @@ public class RandomAgent implements Agent {
 	
 	
 	/* (non-Javadoc)
-	 * @see ch.uzh.ifi.ddis.pai.chessim.game.Agent#nextMove(ch.uzh.ifi.ddis.pai.chessim.game.Color, ch.uzh.ifi.ddis.pai.chessim.game.Board, ch.uzh.ifi.ddis.pai.chessim.game.History, long)
+	 * @see ch.uzh.ifi.ddis.pai.chessim.game.Agent#nextMove(ch.uzh.ifi.ddis.pai.chessim.game.Color, ch.uzh.ifi.ddis.pai.chessim.game.SlidingWindow, ch.uzh.ifi.ddis.pai.chessim.game.History, long)
 	 */
 	@Override
 	public Move nextMove(Color yourColor, Board board, History history,

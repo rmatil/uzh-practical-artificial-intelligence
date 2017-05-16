@@ -30,7 +30,7 @@ public final class Pawn extends Figure {
 	}
 
 	/* (non-Javadoc)
-	 * @see ch.uzh.ifi.ddis.pai.chessim.game.Figure#possibleMoves(ch.uzh.ifi.ddis.pai.chessim.game.Board)
+	 * @see ch.uzh.ifi.ddis.pai.chessim.game.Figure#possibleMoves(ch.uzh.ifi.ddis.pai.chessim.game.SlidingWindow)
 	 */
 	@Override
 	public Map<Move, Board> possibleMoves(Board currentBoard) {

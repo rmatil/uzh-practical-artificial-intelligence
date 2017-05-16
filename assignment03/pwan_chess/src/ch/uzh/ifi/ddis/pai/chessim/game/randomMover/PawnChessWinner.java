@@ -26,7 +26,7 @@ import ch.uzh.ifi.ddis.pai.chessim.game.WinnerRules;
 public class PawnChessWinner implements WinnerRules {
 
 	/* (non-Javadoc)
-	 * @see ch.uzh.ifi.ddis.pai.chessim.game.WinnerRules#winner(ch.uzh.ifi.ddis.pai.chessim.game.Board, ch.uzh.ifi.ddis.pai.chessim.game.History, ch.uzh.ifi.ddis.pai.chessim.game.Color)
+	 * @see ch.uzh.ifi.ddis.pai.chessim.game.WinnerRules#winner(ch.uzh.ifi.ddis.pai.chessim.game.SlidingWindow, ch.uzh.ifi.ddis.pai.chessim.game.History, ch.uzh.ifi.ddis.pai.chessim.game.Color)
 	 */
 	@Override
 	public Color winner(Board board, History history, Color nextMover) {
