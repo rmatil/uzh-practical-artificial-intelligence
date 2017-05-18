@@ -1,14 +1,16 @@
 package students;
 
 import ch.uzh.ifi.ddis.pai.chessim.game.*;
-import students.matileraphael.minimax.MiniMax;
-
-import java.util.Map;
+import students.matileraphael.commons.Context;
+import students.matileraphael.rulebased.RuleBasedAgent;
 
 public class MatileRaphael implements Agent {
 
+    private RuleBasedAgent agent;
 
-    private int initialStartingPosition = 0;
+    public MatileRaphael() {
+        this.agent = new RuleBasedAgent();
+    }
 
     /* (non-Javadoc)
      * @see ch.uzh.ifi.ddis.pai.chessim.game.Agent#developerAlias()
@@ -27,17 +29,7 @@ public class MatileRaphael implements Agent {
     public Move nextMove(Color yourColor, Board board, History history, long timeLimit) {
         // white color is represented by X on the display
 
-        // calculate the initial starting side
-        if (history.size() <= 2) {
-            for (Map.Entry<Coordinates, Figure> entry : board.figures(yourColor).entrySet()) {
-                if (entry.getKey().getRow() > (board.height / 2)) {
-                    this.initialStartingPosition = board.height;
-                }
-            }
-        }
-
-        MiniMax miniMax = new MiniMax(yourColor);
-        return miniMax.slidingWindowMinimax(board, this.initialStartingPosition, history.size());
+        return this.agent.makeNextMove(new Context(yourColor, board, history));
     }
 
 }

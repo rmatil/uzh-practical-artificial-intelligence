@@ -31,8 +31,8 @@ public class GameStarter {
 	 */
 	public static void main(String[] args){
 		//To have a look at a game you can run the RandomAgent against itself by uncommenting the following line
-//		Game game = new RandomMoverPawnGame(20000,1000, new RandomAgent(), new RandomAgent(), 0.1, (new Date()).getTime());
-		Game game = new RandomMoverPawnGame(20000,1000, new MatileRaphael(), new AgressiveAgent(), 0.1, (new Date()).getTime());
+		Game game = new RandomMoverPawnGame(20000,1000, new MatileRaphael(), new RandomAgent(), 0.1, (new Date()).getTime());
+//		Game game = new RandomMoverPawnGame(20000,1000, new MatileRaphael(), new AgressiveAgent(), 0.1, (new Date()).getTime());
 		game.registerDisplay(new ConsoleDisplay());
 		GameResult result = game.playGame();
 	}
