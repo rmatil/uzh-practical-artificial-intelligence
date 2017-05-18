@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A rule which returns moves representing a step forward in order to make a touch down to the other side of the board.
+ */
 public class TouchDownRule implements IRule {
 
     @Override

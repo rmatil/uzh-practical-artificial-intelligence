@@ -12,6 +12,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Evaluates the current game state for particular moves which capture enemies.
+ * This is mainly based on the decision, which of the both players has a better proportional relation
+ * between attackers and defenders for a particular position.
+ */
 public class CaptureRule extends ADefenseVectorRule implements IRule {
 
     @Override

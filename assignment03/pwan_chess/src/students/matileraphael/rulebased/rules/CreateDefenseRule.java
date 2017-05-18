@@ -9,6 +9,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Tries to increase the defense of particular positions by evaluating, whether a straight move forward
+ * will result in a better position or not.
+ */
 public class CreateDefenseRule extends ADefenseVectorRule implements IRule {
 
     @Override

@@ -9,6 +9,9 @@ import students.matileraphael.commons.Pair;
 
 import java.util.Map;
 
+/**
+ * This rule is used to make an arbitrary move by eating an enemy pawn or walking straight forward.
+ */
 public class FallbackMoveRule implements IRule {
 
     @Override

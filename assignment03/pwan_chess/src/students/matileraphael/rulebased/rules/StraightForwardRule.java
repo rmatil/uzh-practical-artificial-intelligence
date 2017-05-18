@@ -6,6 +6,10 @@ import students.matileraphael.commons.Pair;
 
 import java.util.*;
 
+/**
+ * A rule which its only purpose lies in returning a straight move
+ * for a pawn, if the new position has any defenders.
+ */
 public class StraightForwardRule implements IRule {
 
     private Map<Coordinates, Boolean> defenders = new HashMap<>();

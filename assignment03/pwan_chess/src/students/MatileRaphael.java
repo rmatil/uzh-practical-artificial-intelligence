@@ -3,13 +3,24 @@ package students;
 import ch.uzh.ifi.ddis.pai.chessim.game.*;
 import students.matileraphael.commons.Context;
 import students.matileraphael.rulebased.RuleBasedAgent;
+import students.matileraphael.rulebased.rules.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MatileRaphael implements Agent {
 
     private RuleBasedAgent agent;
 
     public MatileRaphael() {
-        this.agent = new RuleBasedAgent();
+        List<IRule> rules = new ArrayList<>();
+        rules.add(new TouchDownRule()); // 1.0
+        rules.add(new CaptureRule()); // 0.95
+        rules.add(new IncreaseAttackedPawnsDefenseRule()); // 0.75
+        rules.add(new CreateDefenseRule()); // 0.70
+        rules.add(new StraightForwardRule()); // 0.5
+
+        this.agent = new RuleBasedAgent(rules);
     }
 
     /* (non-Javadoc)
@@ -28,7 +39,6 @@ public class MatileRaphael implements Agent {
     @Override
     public Move nextMove(Color yourColor, Board board, History history, long timeLimit) {
         // white color is represented by X on the display
-
         return this.agent.makeNextMove(new Context(yourColor, board, history));
     }
 

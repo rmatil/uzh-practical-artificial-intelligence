@@ -7,6 +7,13 @@ import students.matileraphael.commons.Pair;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An abstract rule, specifying helper methods to find defenders resp. attackers
+ * for a particular pawn position. In addition, such states are cached, to increase
+ * speed if multiple implementations of {@link ICachingRule} will use these methods.
+ * <p>
+ * Due to the changing game state on every move, the cache has to be rebuilt every time.
+ */
 public abstract class ADefenseVectorRule implements ICachingRule {
 
     protected final Map<Coordinates, Integer> defenders = new HashMap<>();
