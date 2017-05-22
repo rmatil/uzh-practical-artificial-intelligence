@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * This rule is used to make an arbitrary move by eating an enemy pawn or walking straight forward.
  */
-public class FallbackMoveRule implements IRule {
+public class FallbackMoveRule extends ADefenseVectorRule implements IRule {
 
     @Override
     public Pair<Float, Move> getMove(Context context) {
@@ -33,21 +33,43 @@ public class FallbackMoveRule implements IRule {
             if (context.getBoard().onBoard(upperLeft)
                     && null != upperLeftFigure
                     && upperLeftFigure.color.equals(context.getColor().getOtherColor())) {
-                // we are targeted by an enemy player, check whether we can beat him
-                // if we take his position
-                return new Pair<>(IRule.MAX_INCENTIVE / 1000f, new Move(entry.getKey(), upperLeft));
+
+                float defenders = super.countDefenders(upperLeft, context.getBoard(), context.getColor(), directionFactor);
+
+                // avoid division by zero
+                if (0 == defenders) {
+                    defenders = 0.1f;
+                }
+
+                // we are targeted by an enemy player, check whether we can beat him if we take his position
+                // -> prefer moves which do not result in being attacked
+                return new Pair<>(IRule.MAX_INCENTIVE / (1000f / defenders), new Move(entry.getKey(), upperLeft));
             }
 
             if (context.getBoard().onBoard(upperRight)
                     && null != upperRightFigure
                     && upperRightFigure.color.equals(context.getColor().getOtherColor())) {
+                float defenders = super.countDefenders(upperLeft, context.getBoard(), context.getColor(), directionFactor);
+
+                // avoid division by zero
+                if (0 == defenders) {
+                    defenders = 0.1f;
+                }
+
                 // we are targeted by an enemy player, check whether we can beat him
                 // if we take his position
-                return new Pair<>(IRule.MAX_INCENTIVE / 1000f, new Move(entry.getKey(), upperRight));
+                return new Pair<>(IRule.MAX_INCENTIVE / (1000f / defenders), new Move(entry.getKey(), upperRight));
             }
 
             if (context.getBoard().onBoard(upperStraight) && null == upperStraightFigure) {
-                return new Pair<>(IRule.MAX_INCENTIVE / 1000f, new Move(entry.getKey(), upperStraight));
+                float defenders = super.countDefenders(upperLeft, context.getBoard(), context.getColor(), directionFactor);
+
+                // avoid division by zero
+                if (0 == defenders) {
+                    defenders = 0.1f;
+                }
+
+                return new Pair<>(IRule.MAX_INCENTIVE / (1000f / defenders), new Move(entry.getKey(), upperStraight));
             }
         }
 

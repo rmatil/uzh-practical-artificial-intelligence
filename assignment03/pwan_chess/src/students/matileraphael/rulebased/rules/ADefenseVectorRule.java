@@ -67,12 +67,12 @@ public abstract class ADefenseVectorRule implements ICachingRule {
         Coordinates upperRight = new Coordinates(startingPosition.getRow() + (directionIndicator), startingPosition.getColumn() + 1);
         Figure upperRightFigure = board.figureAt(upperRight);
 
-        if (null != upperLeftFigure && upperLeftFigure.color.equals(ownColor)) {
+        if (null != upperLeftFigure && upperLeftFigure.color.equals(ownColor.getOtherColor())) {
             attackers++;
             attackers += this.countAttackers(upperLeft, board, ownColor, directionIndicator);
         }
 
-        if (null != upperRightFigure && upperRightFigure.color.equals(ownColor)) {
+        if (null != upperRightFigure && upperRightFigure.color.equals(ownColor.getOtherColor())) {
             attackers++;
             attackers += this.countAttackers(upperRight, board, ownColor, directionIndicator);
         }

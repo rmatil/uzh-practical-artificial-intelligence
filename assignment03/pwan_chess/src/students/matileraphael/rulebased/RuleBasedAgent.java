@@ -1,5 +1,7 @@
 package students.matileraphael.rulebased;
 
+import ch.uzh.ifi.ddis.pai.chessim.game.Coordinates;
+import ch.uzh.ifi.ddis.pai.chessim.game.Figure;
 import ch.uzh.ifi.ddis.pai.chessim.game.Move;
 import students.matileraphael.commons.Context;
 import students.matileraphael.commons.Pair;
@@ -53,6 +55,7 @@ public class RuleBasedAgent {
                     logger.warning("Found an invalid move: " + nextMovePair.getValue());
                 }
 
+                System.out.println("Move: " + nextMovePair.getKey() + ", " + nextMovePair.getValue() + ", " + rule.getClass().getName());
                 bestMoves.add(nextMovePair);
             }
         }

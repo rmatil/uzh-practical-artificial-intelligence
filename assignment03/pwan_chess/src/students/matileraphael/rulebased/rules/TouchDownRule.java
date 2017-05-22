@@ -27,10 +27,13 @@ public class TouchDownRule implements IRule {
             Coordinates upperStraight = new Coordinates(entry.getKey().getRow() + directionFactor, entry.getKey().getColumn());
 
             if (context.getBoard().onBoard(upperStraight) && context.getBoard().figureAt(upperStraight) == null) {
-                boolean touchDownPossible = this.touchDownPossible(entry.getKey(), context.getBoard(), context.getColor(), directionFactor);
+                int touchDownPossible = this.touchDownPossible(entry.getKey(), context.getBoard(), context.getColor(), directionFactor);
 
-                if (touchDownPossible) {
-                    possibleMoves.add(new Pair<>((float) IRule.MAX_INCENTIVE, new Move(entry.getKey(), upperStraight)));
+                if (touchDownPossible > 0) {
+                    float distanceToTargetFactor = (1 / (float) Math.pow(touchDownPossible, 2)) * 0.05f;
+                    float incentive = (IRule.MAX_INCENTIVE * 0.95f) + distanceToTargetFactor;
+
+                    possibleMoves.add(new Pair<>(incentive, new Move(entry.getKey(), upperStraight)));
                 }
             }
         }
@@ -43,18 +46,33 @@ public class TouchDownRule implements IRule {
         return null;
     }
 
-    private boolean touchDownPossible(Coordinates startingPosition, Board board, Color ownColor, int directionIndicator) {
-        boolean touchDownPossible = true;
+    private int touchDownPossible(Coordinates startingPosition, Board board, Color ownColor, int directionIndicator) {
 
-        for (int i = startingPosition.getRow(); (i < board.height && i >= 0); i = i + directionIndicator) {
+        // avoid starting at position we are currently standing on
+        int distanceToTarget = 0;
+        for (int i = startingPosition.getRow() + directionIndicator; (i < board.height && i >= 0); i = i + directionIndicator) {
             Coordinates target = new Coordinates(i, startingPosition.getColumn());
+            Coordinates leftTarget = new Coordinates(i, startingPosition.getColumn() - 1);
+            Coordinates rightTarget = new Coordinates(i, startingPosition.getColumn() + 1);
 
             if (! board.onBoard(target) || board.figureAt(target) != null) {
-                touchDownPossible = false;
+                distanceToTarget = - 1;
                 break;
             }
+
+            if (! board.onBoard(leftTarget) || (board.figureAt(leftTarget) != null && ! board.figureAt(leftTarget).color.equals(ownColor))) {
+                distanceToTarget = - 1;
+                break;
+            }
+
+            if (! board.onBoard(rightTarget) || (board.figureAt(rightTarget) != null && ! board.figureAt(rightTarget).color.equals(ownColor))) {
+                distanceToTarget = - 1;
+                break;
+            }
+
+            distanceToTarget++;
         }
 
-        return touchDownPossible;
+        return distanceToTarget;
     }
 }

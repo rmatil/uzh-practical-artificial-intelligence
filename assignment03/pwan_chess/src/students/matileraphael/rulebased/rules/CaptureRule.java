@@ -43,8 +43,8 @@ public class CaptureRule extends ADefenseVectorRule implements IRule {
                     && upperLeftFigure.color.equals(context.getColor().getOtherColor())) {
                 // we are targeted by an enemy player, check whether we can beat him
                 // if we take his position
-                int attackers = this.countAttackers(upperLeft, context.getBoard(), context.getColor(), directionFactor);
-                int defenders = this.countDefenders(upperLeft, context.getBoard(), context.getColor(), directionFactor);
+                int attackers = super.countAttackers(upperLeft, context.getBoard(), context.getColor(), directionFactor);
+                int defenders = super.countDefenders(upperLeft, context.getBoard(), context.getColor(), directionFactor);
 
                 float incentive = (float) (defenders - attackers);
 
@@ -62,8 +62,8 @@ public class CaptureRule extends ADefenseVectorRule implements IRule {
                     && upperRightFigure.color.equals(context.getColor().getOtherColor())) {
                 // we are targeted by an enemy player, check whether we can beat him
                 // if we take his position
-                int attackers = this.countAttackers(upperLeft, context.getBoard(), context.getColor(), directionFactor);
-                int defenders = this.countDefenders(upperLeft, context.getBoard(), context.getColor(), directionFactor);
+                int attackers = super.countAttackers(upperRight, context.getBoard(), context.getColor(), directionFactor);
+                int defenders = super.countDefenders(upperRight, context.getBoard(), context.getColor(), directionFactor);
 
                 float incentive = (float) (defenders - attackers);
 
@@ -89,7 +89,14 @@ public class CaptureRule extends ADefenseVectorRule implements IRule {
                 normalized = 1;
             }
 
-            entry.setKey(normalized * 0.95f);
+            int currentRow = entry.getValue().to.getRow();
+            int goalRow = (directionFactor == 1) ? context.getBoard().height - 1 : 0;
+
+            int distance = Math.abs(goalRow - currentRow);
+            distance = (distance == 0) ? 1 : distance;
+
+            float distanceToTargetFactor = (1 / distance) * 0.05f;
+            entry.setKey((normalized * 0.95f) + distanceToTargetFactor);
         }
 
         if (possibleMoves.size() > 0) {

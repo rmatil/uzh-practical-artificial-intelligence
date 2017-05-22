@@ -14,7 +14,7 @@ public class MatileRaphael implements Agent {
 
     public MatileRaphael() {
         List<IRule> rules = new ArrayList<>();
-        rules.add(new TouchDownRule()); // 1.0
+        rules.add(new TouchDownRule()); // 0.99
         rules.add(new CaptureRule()); // 0.95
         rules.add(new IncreaseAttackedPawnsDefenseRule()); // 0.75
         rules.add(new CreateDefenseRule()); // 0.70

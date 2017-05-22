@@ -46,6 +46,7 @@ public class CreateDefenseRule extends ADefenseVectorRule implements IRule {
         // normalize values to [0,1] before returning
         for (Pair<Float, Move> entry : positionsToBuildDefenseOn) {
             float normalized = (entry.getKey() - min) / (max - min);
+
             entry.setKey(normalized * 0.70f);
         }
 
